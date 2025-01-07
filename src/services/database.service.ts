@@ -1,10 +1,11 @@
 import SQLiteAdapter from "@/services/adapters/sqlite.adapter";
 import Logs from "@/models/logs";
 import { injectable, inject } from "inversify";
+import Job from "@/models/Job";
 
 export interface DatabaseServiceAdapter {
-    saveSearchLogs: (data: any) => Promise<any>;
-    saveSearchResults: (data: any) => Promise<any>;
+    storeSearch: (data: any) => Promise<number | undefined>;
+    storeDiscoveredJobs: (data: Job[]) => void;
     saveJobDetails: (data: any) => Promise<any>;
 }
 
@@ -16,12 +17,12 @@ export default class DatabaseService implements DatabaseServiceAdapter {
         this.adapter = options.adapter;
     }
 
-    async saveSearchLogs(data: Logs) {
-        this.adapter.saveSearchLogs(data);
+    async storeSearch(data: Logs) {
+        return await this.adapter.storeSearch(data);
     }
 
-    async saveSearchResults(data: any) {
-        return data;
+    async storeDiscoveredJobs(data: Job[]) {
+        this.adapter.storeDiscoveredJobs(data);
     }
 
     async saveJobDetails(data: any) {

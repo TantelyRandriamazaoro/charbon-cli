@@ -12,11 +12,13 @@ import ScrapeController from "./controllers/scrape.controller";
 import ListController from "./controllers/list.controller";
 import PrepareController from "./controllers/prepare.controller";
 import ApplyController from "./controllers/apply.controller";
+import JobService from "./services/job.service";
 
 
 const container = new Container();
 
 // Services
+container.bind(JobService).toSelf();
 container.bind(TransformationService).toSelf();
 container.bind(DatabaseService).toDynamicValue(() => {
     return new DatabaseService({
