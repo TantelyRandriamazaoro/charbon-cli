@@ -1,5 +1,5 @@
 export default interface Logs {
-    id: number;
+    id?: number;
     query: string;
     keywords: string;
     timestamp: Date;
