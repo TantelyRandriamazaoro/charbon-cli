@@ -1,16 +1,25 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import { google } from 'googleapis';
-import Boards from '../../constants/boards';
+import Boards from '@constants/boards';
+import _Boards from '@/models/boards';
+import { injectable, inject } from "inversify";
+import LogService from './log.service';
+import DatabaseService from './database.service';
 
+@injectable()
 export default class SearchService {
+    private apiKey: string;
+    private cx: string;
 
     constructor(
-        private readonly apiKey: string,
-        private readonly cx: string
-    ) { }
+        @inject(LogService) private logService: LogService,
+        @inject(DatabaseService) private databaseService: DatabaseService,
+        options: { apiKey: string; id: string; }
+    ) {
+        this.apiKey = options.apiKey;
+        this.cx = options.id;
+    }
 
-    async query(query: string, options: { keywords: string; board: string; limit: string; }) {
+    async query(query: string, options: { keywords: string; board: _Boards; limit: string; }) {
         const customsearch = google.customsearch('v1');
 
         const fullQuery = this.buildQuery(options);
@@ -20,6 +29,8 @@ export default class SearchService {
             cx: this.cx,
             q: `${query} ${fullQuery}`
         });
+
+        await this.logService.logSearch(query, options);
 
         return res.data.items;
     }

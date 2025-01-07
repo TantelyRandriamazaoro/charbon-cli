@@ -1,7 +1,7 @@
-import { DatabaseServiceAdapter } from ".";
 import Logs from "@/models/logs";
 import sqlite3 from 'sqlite3';
 import { Database, open } from 'sqlite';
+import { DatabaseServiceAdapter } from "../database.service";
 
 export default class SQLiteAdapter implements DatabaseServiceAdapter {
     private database: Database<sqlite3.Database, sqlite3.Statement> | undefined;

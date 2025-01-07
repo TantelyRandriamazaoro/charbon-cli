@@ -3,7 +3,8 @@
 import chalk from "chalk";
 import figlet from "figlet";
 import { program } from "commander";
-import search from "@commands/search";
+import container from "@/index";
+import SearchController from "@/controllers/search.controller";
 
 program
   .version("1.0.0")
@@ -26,7 +27,8 @@ program
   .option("-l, --limit <limit>", "Limit the number of results", "10")
   .description("Search for jobs on a specific board, fetches the job description and custom fields")
   .action((query, options) => {
-    search(query, options);
+    const searchController = container.get(SearchController);
+    searchController.handle(query, options);
   });
 
 program

@@ -1,5 +1,6 @@
+import SQLiteAdapter from "@/services/adapters/sqlite.adapter";
 import Logs from "@/models/logs";
-import SQLiteAdapter from "./sqlite";
+import { injectable, inject } from "inversify";
 
 export interface DatabaseServiceAdapter {
     saveSearchLogs: (data: any) => Promise<any>;
@@ -7,21 +8,12 @@ export interface DatabaseServiceAdapter {
     saveJobDetails: (data: any) => Promise<any>;
 }
 
-
+@injectable()
 export default class DatabaseService implements DatabaseServiceAdapter {
     private adapter: SQLiteAdapter;
 
-    constructor(type: 'sqlite' | 'mysql') {
-        switch (type) {
-            case 'sqlite':
-                this.adapter = new SQLiteAdapter();
-                break;
-            case 'mysql':
-                this.adapter = new SQLiteAdapter();
-                break;
-            default:
-                this.adapter = new SQLiteAdapter();
-        }
+    constructor(options: { adapter: SQLiteAdapter }) {
+        this.adapter = options.adapter;
     }
 
     async saveSearchLogs(data: Logs) {

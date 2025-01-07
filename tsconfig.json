@@ -1,28 +1,52 @@
 {
-    "compilerOptions": {
-      "target": "ESNext",
-      "module": "ESNext",
-      "lib": ["es6", "es2015", "dom"],
-      "moduleResolution": "node",
-      "moduleDetection": "auto",
-      "declaration": true,
-      "baseUrl": "./",
-      "outDir": "dist",
-      "strict": true,
-      "types": ["node"],
-      "esModuleInterop": true,
-      "resolveJsonModule": true,
-      "paths": {
-        "@/*": ["src/*"],
-        "@services/*": ["src/services/*"],
-        "@commands/*": ["src/commands/*"],
-        "@constants/*": ["src/constants/*"],
-      }
-    },
-    "tsc-alias": {
-      "resolveFullPaths": true
-    },
-    "include": ["src/**/*.ts", "bin/**/*.ts"],  // Files to include
-    "exclude": ["node_modules", "dist"]
-  }
-  
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": [
+      "es6",
+      "es2015",
+      "dom"
+    ],
+    "moduleResolution": "node",
+    "moduleDetection": "auto",
+    "declaration": true,
+    "baseUrl": "./",
+    "outDir": "dist",
+    "strict": true,
+    "types": [
+      "node"
+    ],
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@services/*": [
+        "src/services/*"
+      ],
+      "@controllers/*": [
+        "src/controllers/*"
+      ],
+      "@adapters/*": [
+        "src/services/adapters/*"
+      ],
+      "@constants/*": [
+        "src/constants/*"
+      ],
+    }
+  },
+  "tsc-alias": {
+    "resolveFullPaths": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "bin/**/*.ts"
+  ], // Files to include
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
