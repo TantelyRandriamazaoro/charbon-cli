@@ -1,19 +1,15 @@
 import Boards from "@/models/boards";
 import { inject, injectable } from "inversify";
-import LogService from "@/services/log.service";
-import DatabaseService from "@/services/database.service";
 import SearchService from "@/services/search.service";
 import TransformationService from "@/services/transformation.service";
-import JobService from "@/services/job.service";
+import IDatabaseService from "@/models/IDatabaseService";
 
 @injectable()
 export default class SearchController {
     constructor(
-        @inject(LogService) private logService: LogService,
-        @inject(DatabaseService) private databaseService: DatabaseService,
         @inject(SearchService) private searchService: SearchService,
         @inject(TransformationService) private transformationService: TransformationService,
-        @inject(JobService) private jobService: JobService
+        @inject('DatabaseService') private databaseService: IDatabaseService
     ) {}
 
     async handle (query: string, options: { keywords: string; board: Boards; limit: string; }) {
@@ -25,8 +21,7 @@ export default class SearchController {
             return;
         }
 
-        const jobs = await this.jobService.storeDiscovered(transformedResults);
-
-        console.log(jobs);
+        this.databaseService.storeDiscoveredJobs(transformedResults);
+        console.log(transformedResults);
     }
 }

@@ -5,6 +5,8 @@ import figlet from "figlet";
 import { program } from "commander";
 import container from "@/index";
 import SearchController from "@/controllers/search.controller";
+import PrepareController from "@/controllers/prepare.controller";
+import ScrapeController from "@/controllers/scrape.controller";
 
 program
   .version("1.0.0")
@@ -31,6 +33,15 @@ program
     searchController.handle(query, options);
   });
 
+  program
+  .command("scrape")
+  .description("Scrape job applications")
+  .action(() => {
+    console.log("Scraping job applications");
+    const scrapeController = container.get(ScrapeController);
+    scrapeController.handle();
+  });
+
 program
   .command("list")
   .description("List all jobs available")
@@ -44,5 +55,10 @@ program
 program
   .command("prepare")
   .description("Prepare job applications")
+  .action(() => {
+    console.log("Preparing job applications");
+    const prepareController = container.get(PrepareController);
+    prepareController.handle();
+  });
 
 program.parse(process.argv);

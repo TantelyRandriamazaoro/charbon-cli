@@ -21,3 +21,12 @@ CREATE TABLE jobs (
   custom_fields TEXT
   status TEXT NOT NULL DEFAULT 'Discovered'
 );
+
+CREATE TABLE ai_execution_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  prompt_tokens INTEGER NOT NULL,
+  completion_tokens INTEGER NOT NULL,
+  total_tokens INTEGER NOT NULL,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  completion_tokens_details TEXT
+);
