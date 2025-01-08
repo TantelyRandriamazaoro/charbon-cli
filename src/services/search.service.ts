@@ -2,9 +2,8 @@ import { google } from 'googleapis';
 import Boards from '@constants/boards';
 import _Boards from '@/models/boards';
 import { injectable, inject } from "inversify";
-import LogService from './log.service';
-import DatabaseService from './database.service';
 import SearchResults from '@/models/SearchResults';
+import IDatabaseService from '@/models/IDatabaseService';
 
 @injectable()
 export default class SearchService {
@@ -12,8 +11,7 @@ export default class SearchService {
     private cx: string;
 
     constructor(
-        @inject(LogService) private logService: LogService,
-        @inject(DatabaseService) private databaseService: DatabaseService,
+        @inject('DatabaseService') private databaseService: IDatabaseService,
         options: { apiKey: string; id: string; }
     ) {
         this.apiKey = options.apiKey;

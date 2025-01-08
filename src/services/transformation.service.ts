@@ -1,5 +1,6 @@
 import SearchResults from "@/models/SearchResults"
 import Boards from "@/models/boards";
+import { ScrapedData } from "./scraper.service";
 
 export default class TransformationService {
     constructor() { }
@@ -57,5 +58,9 @@ export default class TransformationService {
                     link: this.cleanBoardUrl(data.board, item.link)
                 }
             })
+    }
+
+    async scrapedLeverData(data: ScrapedData) {
+        
     }
 }

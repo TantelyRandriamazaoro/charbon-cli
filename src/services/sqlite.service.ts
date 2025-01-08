@@ -1,26 +1,33 @@
 import Logs from "@/models/logs";
 import sqlite3 from 'sqlite3';
 import { Database, open } from 'sqlite';
-import { DatabaseServiceAdapter } from "../database.service";
 import Job from "@/models/Job";
+import { injectable } from "inversify";
+import IDatabaseService from "@/models/IDatabaseService";
 
-export default class SQLiteAdapter implements DatabaseServiceAdapter {
+@injectable()
+export default class SQLiteService implements IDatabaseService {
     private database: Database<sqlite3.Database, sqlite3.Statement> | undefined;
 
     constructor() {
-        open({
-            filename: 'data/db.sqlite',
-            driver: sqlite3.Database,
-        }).then((db) => {
-            if (!db) {
-                throw new Error('Database not found');
-            }
+        this.connect();
+    }
 
-            this.database = db;
+    async connect(): Promise<void> {
+        try {
+            const database = await open({
+                filename: 'data/db.sqlite',
+                driver: sqlite3.Database,
+            })
+
+            this.database = database;
+
             console.log('Connected to sqlite database');
-        }).catch((err) => {
+        } catch (err) {
             console.error(err);
-        });
+        }
+
+        return;
     }
 
     async storeSearch(data: Logs): Promise<number | undefined> {
@@ -38,6 +45,17 @@ export default class SQLiteAdapter implements DatabaseServiceAdapter {
             data.forEach((job) => {
                 stmt?.run([job.search_id, job.title, job.link, job.board]);
             });
+
+            return;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async getDiscoveredJobs() {
+        try {
+            const jobs = await this.database?.all(`SELECT id, link FROM job WHERE status = 'discovered'`);
+            return jobs as Job[] || [];
         } catch (err) {
             console.error(err);
         }

@@ -1,6 +1,4 @@
-import { Container } from "inversify";
-import DatabaseService from "./services/database.service";
-import SQLiteAdapter from "./services/adapters/sqlite.adapter";
+import { Container, interfaces } from "inversify";
 import SearchService from "./services/search.service";
 import LogService from "./services/log.service";
 
@@ -12,32 +10,30 @@ import ScrapeController from "./controllers/scrape.controller";
 import ListController from "./controllers/list.controller";
 import PrepareController from "./controllers/prepare.controller";
 import ApplyController from "./controllers/apply.controller";
-import JobService from "./services/job.service";
+import SQLiteService from "./services/sqlite.service";
+import IDatabaseService from "./models/IDatabaseService";
+import ScraperService from "./services/scraper.service";
 
 
 const container = new Container();
 
+if (env.DB_TYPE === 'sqlite') {
+    container.bind<IDatabaseService>('DatabaseService').to(SQLiteService).inSingletonScope();
+}
 // Services
-container.bind(JobService).toSelf();
 container.bind(TransformationService).toSelf();
-container.bind(DatabaseService).toDynamicValue(() => {
-    return new DatabaseService({
-        adapter: new SQLiteAdapter()
-    });
-}).inSingletonScope();
 container.bind(LogService).toSelf();
-container.bind(SearchService).toDynamicValue(() => {
+container.bind(ScraperService).toSelf();
+container.bind(SearchService).toDynamicValue((context) => {
     return new SearchService(
-        container.get(LogService),
-        container.get(DatabaseService),
+        context.container.get('DatabaseService'),
         {
             apiKey: env.GOOGLE_CUSTOM_SEARCH_API_KEY,
             id: env.GOOGLE_CUSTOM_SEARCH_CX
         });
 });
-container.bind(AiService).toDynamicValue(() => {
+container.bind(AiService).toDynamicValue((context) => {
     return new AiService(
-        container.get(DatabaseService),
         {
             apiKey: env.GPT4_API_KEY
         });
