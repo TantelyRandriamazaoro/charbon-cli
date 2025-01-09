@@ -2,12 +2,12 @@ CREATE TABLE search (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   query TEXT NOT NULL,
   keywords TEXT,
-  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
   page_number INTEGER NOT NULL DEFAULT 1, -- Tracks the page of the search
-  board TEXT
+  board TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE jobs (
+CREATE TABLE job (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   search_id INTEGER NOT NULL REFERENCES search(id),
   title TEXT NOT NULL,
@@ -16,10 +16,11 @@ CREATE TABLE jobs (
   location TEXT,
   description TEXT,
   salary TEXT,
-  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-  board TEXT
-  custom_fields TEXT
-  status TEXT NOT NULL DEFAULT 'Discovered'
+  board TEXT,
+  custom_fields TEXT,
+  resume TEXT,
+  status TEXT NOT NULL DEFAULT 'Discovered',
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE ai_execution_log (
@@ -27,6 +28,6 @@ CREATE TABLE ai_execution_log (
   prompt_tokens INTEGER NOT NULL,
   completion_tokens INTEGER NOT NULL,
   total_tokens INTEGER NOT NULL,
-  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-  completion_tokens_details TEXT
+  completion_tokens_details TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
