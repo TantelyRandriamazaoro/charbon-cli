@@ -1,4 +1,4 @@
-import SearchResults from "@/models/SearchResults"
+import { SearchResults } from "@/models/Search"
 import Boards from "@/models/boards";
 import { ScrapedData } from "./scraper.service";
 
@@ -46,21 +46,33 @@ export default class TransformationService {
     }
 
     async searchResults(data: SearchResults) {
+        const seenLinks = new Set<string>(); // Track unique links
+
         return data.items
             .filter((item) => {
                 return item.link && this.isValidBoardUrl(data.board, item.link);
+            })
+            .filter((item) => {
+                const cleanLink = this.cleanBoardUrl(data.board, item.link);
+                if (seenLinks.has(cleanLink)) {
+                    return false; // Duplicate found, exclude it
+                }
+                seenLinks.add(cleanLink); // Mark as seen
+                return true; // Include this item
             })
             .map((item) => {
                 return {
                     search_id: data.id,
                     board: data.board,
+                    resume: data.resume,
                     title: item.title || '',
-                    link: this.cleanBoardUrl(data.board, item.link)
-                }
-            })
+                    link: this.cleanBoardUrl(data.board, item.link),
+                };
+            });
     }
 
+
     async scrapedLeverData(data: ScrapedData) {
-        
+
     }
 }

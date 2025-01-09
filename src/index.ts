@@ -13,6 +13,7 @@ import ApplyController from "./controllers/apply.controller";
 import SQLiteService from "./services/sqlite.service";
 import IDatabaseService from "./models/IDatabaseService";
 import ScraperService from "./services/scraper.service";
+import FileSystemService from "./services/filesystem.service";
 
 
 const container = new Container();
@@ -21,6 +22,7 @@ if (env.DB_TYPE === 'sqlite') {
     container.bind<IDatabaseService>('DatabaseService').to(SQLiteService).inSingletonScope();
 }
 // Services
+container.bind(FileSystemService).toSelf();
 container.bind(TransformationService).toSelf();
 container.bind(LogService).toSelf();
 container.bind(ScraperService).toSelf();

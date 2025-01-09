@@ -2,7 +2,7 @@ import { google } from 'googleapis';
 import Boards from '@constants/boards';
 import _Boards from '@/models/boards';
 import { injectable, inject } from "inversify";
-import SearchResults from '@/models/SearchResults';
+import { SearchResults } from '@/models/Search';
 import IDatabaseService from '@/models/IDatabaseService';
 
 @injectable()

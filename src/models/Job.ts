@@ -12,6 +12,7 @@ type Job = {
     timestamp?: string;
     board?: string;
     custom_fields?: string;
+    resume?: string;
     status?: Status;
 }
 
