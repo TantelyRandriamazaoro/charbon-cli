@@ -1,3 +1,4 @@
+import Job from "@/models/Job";
 import Boards from "@/models/boards";
 import { injectable } from "inversify";
 import puppeteer, { Browser, Page, Puppeteer } from "puppeteer";
@@ -18,7 +19,7 @@ interface Selectors {
 class LeverScraper {
     private data: ScrapedData;
     private selectors: Selectors;
-    private browser: Browser | null;
+    public browser: Browser | null;
 
     constructor() {
         this.data = {
@@ -31,11 +32,11 @@ class LeverScraper {
         this.browser = null;
     }
 
-    private async initBrowser(): Promise<void> {
+    public async initBrowser(): Promise<void> {
         this.browser = await puppeteer.launch({ headless: true });
     }
 
-    private async closeBrowser(): Promise<void> {
+    public async closeBrowser(): Promise<void> {
         if (this.browser) {
             await this.browser.close();
             console.log('Browser closed');
@@ -74,8 +75,6 @@ class LeverScraper {
 
     public async scrape(url: string): Promise<ScrapedData> {
         try {
-            // Initialize Puppeteer
-            await this.initBrowser();
             const page = await this.browser!.newPage();
 
             // Navigate to the job URL
@@ -91,9 +90,6 @@ class LeverScraper {
             console.log('Scraping completed successfully:', JSON.stringify(this.data));
         } catch (error) {
             console.error('An error occurred during scraping:', error);
-        } finally {
-            // Close the browser
-            await this.closeBrowser();
         }
 
         return this.data;
@@ -108,7 +104,29 @@ export default class ScraperService {
         this.scraper = new LeverScraper();
     }
 
+    async batchScrape(jobs: Job[]) {
+        try {
+            await this.scraper.initBrowser();
+            for (const job of jobs) {
+                const scrapedData = await this.scraper.scrape(job.link);
+                console.log('Finished scraping', job.link);
+                console.log('Scraped data:', JSON.stringify(scrapedData));
+            }
+        } catch (error) {
+            console.error('An error occurred during scraping:', error);
+        } finally {
+            await this.scraper.closeBrowser();
+        }
+    }
+
     async scrape(url: string) {
-        return this.scraper.scrape(url);
+        try {
+            await this.scraper.initBrowser();
+            return this.scraper.scrape(url);
+        } catch (error) {
+            console.error('An error occurred during scraping:', error);
+        } finally {
+            await this.scraper.closeBrowser();
+        }
     }
 }

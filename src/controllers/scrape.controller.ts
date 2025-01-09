@@ -6,24 +6,22 @@ import { inject, injectable } from "inversify";
 @injectable()
 export default class ScrapeController {
     constructor(
+        @inject('DatabaseService') private databaseService: IDatabaseService,
         @inject(ScraperService) private scraperService: ScraperService,
-        @inject(TransformationService) private transformationService: TransformationService,
-        @inject('DatabaseService') private databaseService: IDatabaseService
+        @inject(TransformationService) private transformationService: TransformationService
     ) { }
 
     async handle(options?: { limit?: number }) {
-
-
+        await this.databaseService.init();
         const jobs = await this.databaseService.getDiscoveredJobs();
 
-        const scrapedJobs: any = [];
+        if (!jobs || jobs?.length === 0) {
+            console.log('No jobs to scrape');
+            return;
+        }
 
-        jobs?.forEach(async (job) => {
-            const scrapedData = await this.scraperService.scrape(job.link);
-            console.log('Finished scraping', job.link);
-            scrapedJobs.push(scrapedData);
-        });
+        this.scraperService.batchScrape(jobs)
 
-        console.log(JSON.stringify(scrapedJobs));
+        console.log(JSON.stringify(jobs));
     }
 }
