@@ -10,7 +10,7 @@ import { SearchEntry, SearchOptions, SearchResults } from "@/models/Search";
 export default class SQLiteService implements IDatabaseService {
     private database: Database<sqlite3.Database, sqlite3.Statement> | undefined;
 
-    constructor() {}
+    constructor() { }
 
     async init(): Promise<void> {
         try {
@@ -29,18 +29,38 @@ export default class SQLiteService implements IDatabaseService {
         return;
     }
 
-    async getLastSearch(options: SearchOptions): Promise<SearchEntry | undefined> {
+    async getLastSearch(query: string, options: SearchOptions): Promise<SearchEntry | undefined> {
         try {
-            const search = await this.database?.get(`SELECT * FROM search WHERE query = ? AND keywords = ? AND board = ? ORDER BY timestamp DESC LIMIT 1`, [options.query, options.keywords, options.board]);
+            let sql = `
+                SELECT * 
+                FROM search 
+                WHERE query = ? 
+            `;
+            const params: any[] = [query];
+
+            if (options.keywords) {
+                sql += `AND keywords = ? `;
+                params.push(options.keywords);
+            } else {
+                sql += `AND (keywords IS NULL OR keywords = '') `;
+            }
+
+            sql += `AND board = ? 
+                    ORDER BY timestamp DESC 
+                    LIMIT 1`;
+            params.push(options.board);
+
+            const search = await this.database?.get(sql, params);
             return search as SearchEntry;
         } catch (err) {
             console.error(err);
         }
     }
 
-    async storeSearch(data: Logs): Promise<number | undefined> {
+
+    async storeSearch(data: SearchEntry): Promise<number | undefined> {
         try {
-            const response = await this.database?.run(`INSERT INTO search (query, keywords, timestamp, page_number, board) VALUES (?, ?, ?, ?, ?)`, [data.query, data.keywords, data.timestamp, data.page_number, data.board]);
+            const response = await this.database?.run(`INSERT INTO search (query, keywords, starts_at, board) VALUES (?, ?, ?, ?)`, [data.query, data.keywords, data.starts_at, data.board]);
             return response?.lastID;
         } catch (err) {
             console.error(err);

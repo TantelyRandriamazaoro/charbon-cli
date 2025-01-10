@@ -1,6 +1,7 @@
 import { SearchResults } from "@/models/Search"
 import Boards from "@/models/boards";
 import { ScrapedData } from "./scraper.service";
+import Job from "@/models/Job";
 
 export default class TransformationService {
     constructor() { }
@@ -45,7 +46,7 @@ export default class TransformationService {
         }
     }
 
-    async searchResults(data: SearchResults) {
+    async searchResults(data: SearchResults): Promise<Job[]> {
         const seenLinks = new Set<string>(); // Track unique links
 
         return data.items

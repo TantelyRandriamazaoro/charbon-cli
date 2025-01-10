@@ -1,13 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import inquirer from 'inquirer';
+import { injectable } from 'inversify';
 
+@injectable()
 export default class FileSystemService {
 
     constructor() {
     }
 
-    async pickResume() {
+    async listResume() {
         const dataFolder = 'resumes';
 
         // Check if the folder exists
@@ -26,16 +28,6 @@ export default class FileSystemService {
             return;
         }
 
-        // Prompt the user to select a file
-        const answers = await inquirer.prompt([
-            {
-                type: 'list',
-                name: 'fileChoice',
-                message: 'Pick a resume to use for this search:',
-                choices: files,
-            },
-        ]);
-
-        return answers.fileChoice;
+        return files;
     }
 }

@@ -7,6 +7,7 @@ import container from "@/index";
 import SearchController from "@/controllers/search.controller";
 import PrepareController from "@/controllers/prepare.controller";
 import ScrapeController from "@/controllers/scrape.controller";
+import { SearchOptions } from "@/models/Search";
 
 program
   .version("1.0.0")
@@ -25,15 +26,17 @@ program
   .command("search")
   .argument("<query>", "Search query")
   .option("-k, --keywords <keywords>", "Keywords to search for")
-  .option("-b, --board <board>", "Board to search for", "lever")
+  .option("-b, --board <board>", "Board to search for")
   .option("-l, --limit <limit>", "Limit the number of results", "10")
   .description("Search for jobs on a specific board, fetches the job description and custom fields")
-  .action((query, options) => {
+  .action((query, options: SearchOptions) => {
     const searchController = container.get(SearchController);
-    searchController.handle(query, options);
+    searchController.init().then(() => {
+      searchController.handle(query, options)
+    });
   });
 
-  program
+program
   .command("scrape")
   .description("Scrape job applications")
   .action(() => {

@@ -12,13 +12,15 @@ export type SearchEntry = {
     id?: number;
     query: string;
     keywords: string;
-    page_number: number;
+    starts_at: number;
     board: Boards;
-    timestamp: string;
+    timestamp?: string;
 }
 
 export type SearchOptions = {
     query: string;
     keywords: string;
     board: Boards;
+    starts_at?: number;
+    resume?: string;
 }

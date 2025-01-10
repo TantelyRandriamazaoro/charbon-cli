@@ -2,7 +2,7 @@ CREATE TABLE search (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   query TEXT NOT NULL,
   keywords TEXT,
-  page_number INTEGER NOT NULL DEFAULT 1, -- Tracks the page of the search
+  starts_at INTEGER NOT NULL DEFAULT 1, -- Tracks the page of the search
   board TEXT,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -12,12 +12,9 @@ CREATE TABLE job (
   search_id INTEGER NOT NULL REFERENCES search(id),
   title TEXT NOT NULL,
   link TEXT NOT NULL,
-  company TEXT,
-  location TEXT,
-  description TEXT,
-  salary TEXT,
-  board TEXT,
+  details TEXT,
   custom_fields TEXT,
+  board TEXT,
   resume TEXT,
   status TEXT NOT NULL DEFAULT 'Discovered',
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP

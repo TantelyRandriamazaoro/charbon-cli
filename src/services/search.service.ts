@@ -2,7 +2,7 @@ import { google } from 'googleapis';
 import Boards from '@constants/boards';
 import _Boards from '@/models/boards';
 import { injectable, inject } from "inversify";
-import { SearchResults } from '@/models/Search';
+import { SearchEntry, SearchOptions, SearchResults } from '@/models/Search';
 import IDatabaseService from '@/models/IDatabaseService';
 
 @injectable()
@@ -18,7 +18,7 @@ export default class SearchService {
         this.cx = options.id;
     }
 
-    async query(query: string, options: { keywords: string; board: _Boards; limit: string; }): Promise<SearchResults> {
+    async query(query: string, options: SearchOptions): Promise<SearchResults> {
         const customsearch = google.customsearch('v1');
 
         const fullQuery = this.buildQuery(options);
@@ -26,7 +26,8 @@ export default class SearchService {
         const res = await customsearch.cse.list({
             auth: this.apiKey,
             cx: this.cx,
-            q: `${query} ${fullQuery}`
+            q: `${query} ${fullQuery}`,
+            start: options.starts_at || 1,
         });
 
         const search_id = await this.storeSearch(query, options);
@@ -59,15 +60,14 @@ export default class SearchService {
         return `${keywords} ${board}`;
     }
 
-    async storeSearch(query: string, options: { keywords: string; board: _Boards; limit: string; }) {
-        const searchLogs = {
+    async storeSearch(query: string, options: SearchOptions) {
+        const searchEntry: SearchEntry = {
             query: query.toLowerCase(),
             keywords: options.keywords,
-            timestamp: new Date(),
-            page_number: 1,
+            starts_at: options.starts_at || 1,
             board: options.board
         };
 
-        return await this.databaseService.storeSearch(searchLogs);
+        return await this.databaseService.storeSearch(searchEntry);
     }
 }
