@@ -1,10 +1,14 @@
 import { SearchResults } from "@/models/Search"
 import Boards from "@/models/boards";
-import { ScrapedData } from "./scraper.service";
-import Job from "@/models/Job";
+import Job, { ScrapedJobDetails } from "@/models/Job";
+import { inject, injectable } from "inversify";
+import AiService from "./ai.service";
 
+@injectable()
 export default class TransformationService {
-    constructor() { }
+    constructor(
+        @inject(AiService) private aiService: AiService
+    ) { }
 
     isValidBoardUrl(board: Boards, url?: string | null) {
         if (!url) {
@@ -70,10 +74,5 @@ export default class TransformationService {
                     link: this.cleanBoardUrl(data.board, item.link),
                 };
             });
-    }
-
-
-    async scrapedLeverData(data: ScrapedData) {
-
     }
 }

@@ -1,10 +1,10 @@
 import Boards from "@/models/boards";
 import { inject, injectable } from "inversify";
-import SearchService from "@/services/search.service";
-import TransformationService from "@/services/transformation.service";
+import SearchService from "@/services/core/search.service";
+import TransformationService from "@/services/core/transformation.service";
 import IDatabaseService from "@/models/IDatabaseService";
-import FileSystemService from "@/services/filesystem.service";
-import InquirerService from "@/services/inquirer.service";
+import FileSystemService from "@/services/core/filesystem.service";
+import InquirerService from "@/services/core/inquirer.service";
 import chalk from "chalk";
 import { SearchOptions } from "@/models/Search";
 

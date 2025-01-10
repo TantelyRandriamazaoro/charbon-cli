@@ -12,6 +12,7 @@ CREATE TABLE job (
   search_id INTEGER NOT NULL REFERENCES search(id),
   title TEXT NOT NULL,
   link TEXT NOT NULL,
+  description TEXT,
   details TEXT,
   custom_fields TEXT,
   board TEXT,

@@ -1,4 +1,4 @@
-import AiService from "@/services/ai.service";
+import AiService from "@/services/core/ai.service";
 import { inject, injectable } from "inversify";
 
 @injectable()
@@ -8,6 +8,6 @@ export default class PrepareController {
     ) { }
 
     async handle() {
-        await this.aiService.calculate();
+        // await this.aiService.calculate();
     }
 }

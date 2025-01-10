@@ -42,7 +42,9 @@ program
   .action(() => {
     console.log("Scraping job applications");
     const scrapeController = container.get(ScrapeController);
-    scrapeController.handle();
+    scrapeController.init().then(() =>
+      scrapeController.handle()
+    );
   });
 
 program
