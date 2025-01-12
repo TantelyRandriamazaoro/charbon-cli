@@ -50,13 +50,15 @@ export default class LeverService {
 
         // Extract custom fields
         this.data.custom_fields = await page.evaluate((selector) => {
-            return Array.from(document.querySelectorAll(selector)).map((element) => {
-                const name = element.getAttribute('name') || '';
-                const fields = JSON.parse(element.getAttribute('value') || '{}').fields || [];
-                return { name, fields };
+            const customFields: Array<{ name: string; fields: any }> = [];
+            const customFieldsElements = document.querySelectorAll(selector);
+            customFieldsElements.forEach((customFieldElement) => {
+                const name = customFieldElement.getAttribute('name') || '';
+                const fields = JSON.parse(customFieldElement.getAttribute('value') || '{}').fields || [];
+                customFields.push({ name, fields });
             });
+            return customFields;
         }, this.selectors.fieldsData);
-        
     }
 
     public async scrape(url: string, spinner: Ora, page: Page): Promise<ScrapedJobDetails<LeverCustomFieldCard>> {
