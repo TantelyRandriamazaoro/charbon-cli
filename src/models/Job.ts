@@ -10,7 +10,7 @@ export type Job = {
     details?: JobDetails;
     timestamp?: string;
     board?: string;
-    custom_fields?: string;
+    custom_fields?: NormalizedCustomField[];
     resume?: string;
     status?: Status;
 }
@@ -62,8 +62,9 @@ export interface LeverCustomField {
 export interface NormalizedCustomField {
     type: 'radio' | 'checkbox' | 'textarea' | 'select' | 'text';
     name: string;
-    text: string;
+    label: string;
     possible_values?: Array<string>;
+    value?: string;
 }
 
 export type RawCustomField = LeverCustomFieldCard;

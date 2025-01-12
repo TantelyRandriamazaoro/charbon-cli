@@ -107,7 +107,7 @@ export default class TransformationService {
                     return acc.concat(card.fields.map((field, index) => {
                         const transformedField: NormalizedCustomField = {
                             type: this.mapFieldType(field.type, board),
-                            text: field.text,
+                            label: field.text,
                             name: card.name.replace('baseTemplate', index.toString()),
                             possible_values: field.options ? field.options.map((option) => option.text) : [],
                         };
