@@ -12,7 +12,7 @@ import PrepareController from "./controllers/prepare.controller";
 import ApplyController from "./controllers/apply.controller";
 import SQLiteService from "./services/databases/sqlite.service";
 import IDatabaseService from "./models/IDatabaseService";
-import ScraperService from "./services/core/scraper.service";
+import BrowserService from "./services/core/browser.service";
 import FileSystemService from "./services/core/filesystem.service";
 import InquirerService from "./services/core/inquirer.service";
 import LeverService from "./services/boards/lever.service";
@@ -30,7 +30,7 @@ container.bind(InquirerService).toSelf();
 container.bind(FileSystemService).toSelf();
 container.bind(TransformationService).toSelf();
 container.bind(LogService).toSelf();
-container.bind(ScraperService).toSelf();
+container.bind(BrowserService).toSelf();
 container.bind(SearchService).toDynamicValue((context) => {
     return new SearchService(
         context.container.get('DatabaseService'),

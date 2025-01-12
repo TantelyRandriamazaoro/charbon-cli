@@ -1,6 +1,6 @@
 import IDatabaseService from "@/models/IDatabaseService";
 import { ScrapedJobDetails } from "@/models/Job";
-import ScraperService from "@/services/core/scraper.service";
+import BrowserService from "@/services/core/browser.service";
 import TransformationService from "@/services/core/transformation.service";
 import { inject, injectable } from "inversify";
 
@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 export default class ScrapeController {
     constructor(
         @inject('DatabaseService') private databaseService: IDatabaseService,
-        @inject(ScraperService) private scraperService: ScraperService,
+        @inject(BrowserService) private browserService: BrowserService,
         @inject(TransformationService) private transformationService: TransformationService
     ) { }
 
@@ -25,7 +25,7 @@ export default class ScrapeController {
                 return;
             }
     
-            const { data, failed } = await this.scraperService.batchScrape(jobs);
+            const { data, failed } = await this.browserService.batchScrape(jobs);
             const transformedData = this.transformationService.transformScrapedJobs(data);
 
 

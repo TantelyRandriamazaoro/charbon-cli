@@ -7,7 +7,7 @@ import AiService from "./ai.service";
 import LeverService from "../boards/lever.service";
 
 @injectable()
-export default class ScraperService {
+export default class BrowserService {
     private browser: Browser | null = null;
     private boardService: LeverService | null = null;
 
