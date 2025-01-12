@@ -5,16 +5,6 @@ import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { JobDetails } from "@/models/Job";
 
-// const Step = z.object({
-//     explanation: z.string(),
-//     output: z.string(),
-// });
-
-// const MathResponse = z.object({
-//     steps: z.array(Step),
-//     final_answer: z.string(),
-// });
-
 const JobDetails = z.object({
     technical_skills: z.array(z.string()),
     soft_skills: z.array(z.string()),
@@ -77,4 +67,7 @@ export default class AiService {
         }
     }
 
+    async getCustomAnswers(fields: any) {
+        
+    }
 }

@@ -25,9 +25,12 @@ export default class ScrapeController {
                 return;
             }
     
-            const data = await this.scraperService.batchScrape(jobs);
+            const { data, failed } = await this.scraperService.batchScrape(jobs);
+            const transformedData = this.transformationService.transformScrapedJobs(data);
 
-            await this.databaseService.updateScrapedJobs(data);
+
+            await this.databaseService.updateScrapedJobs(transformedData);
+            await this.databaseService.updateFailedJobs(failed);
 
             console.log('Job scraping completed successfully');
 

@@ -1,7 +1,8 @@
-import { ScrapedJobDetails } from "@/models/Job";
-import { injectable } from "inversify";
+import { LeverCustomFieldCard, NormalizedCustomField, ScrapedJobDetails } from "@/models/Job";
+import { inject, injectable } from "inversify";
 import { Ora } from "ora";
-import puppeteer, { Browser, Page } from "puppeteer";
+import { Page } from "puppeteer";
+import TransformationService from "../core/transformation.service";
 
 interface Selectors {
     description: string;
@@ -9,14 +10,15 @@ interface Selectors {
 
 @injectable()
 export default class LeverService {
-    private data: ScrapedJobDetails;
+    private data: ScrapedJobDetails<LeverCustomFieldCard>;
     private selectors: Selectors;
 
-    
+
     constructor() {
         this.data = {
             description: '',
             custom_fields: [],
+            board: 'lever'
         };
         this.selectors = {
             description: '.posting-page',
@@ -49,24 +51,26 @@ export default class LeverService {
         });
     }
 
-    public async scrape(url: string, spinner: Ora, page: Page): Promise<ScrapedJobDetails> {
-        try {
+    public async scrape(url: string, spinner: Ora, page: Page): Promise<ScrapedJobDetails<LeverCustomFieldCard>> {
+        // Navigate to the job URL
+        spinner.text = 'Navigating to job URL...';
+        await page.goto(url, { waitUntil: 'networkidle2' });
 
-            // Navigate to the job URL
-            spinner.text = 'Navigating to job URL...';
-            await page.goto(url, { waitUntil: 'networkidle2' });
+        // Scrape the job description
+        spinner.text = 'Scraping job description...';
+        await this.scrapeJobDescription(page);
 
-            // Scrape the job description
-            spinner.text = 'Scraping job description...';
-            await this.scrapeJobDescription(page);
-
-            // Scrape custom fields
-            spinner.text = 'Scraping custom fields...';
-            await this.scrapeCustomFields(page);
-        } catch (error) {
-            console.error('An error occurred during scraping:', error);
-        }
+        // Scrape custom fields
+        spinner.text = 'Scraping custom fields...';
+        await this.scrapeCustomFields(page);
 
         return this.data;
+    }
+
+    public isMatch(url: string): boolean {
+        const [base] = url.split('?');
+
+        const regex = /^https:\/\/jobs\.lever\.co\/[a-zA-Z0-9\-]+\/[a-f0-9\-]{36}(\/apply)?$/;
+        return regex.test(base);
     }
 }

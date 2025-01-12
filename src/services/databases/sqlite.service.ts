@@ -1,7 +1,7 @@
 import Logs from "@/models/logs";
 import sqlite3 from 'sqlite3';
 import { Database, open } from 'sqlite';
-import Job, { ScrapedJobDetails } from "@/models/Job";
+import Job, { NormalizedCustomField, ScrapedJobDetails } from "@/models/Job";
 import { injectable } from "inversify";
 import IDatabaseService from "@/models/IDatabaseService";
 import { SearchEntry, SearchOptions, SearchResults } from "@/models/Search";
@@ -82,19 +82,33 @@ export default class SQLiteService implements IDatabaseService {
 
     async getDiscoveredJobs() {
         try {
-            const jobs = await this.database?.all(`SELECT id, title, link FROM job WHERE status = 'Discovered' LIMIT 10`);
+            const jobs = await this.database?.all(`SELECT id, title, link, board FROM job WHERE status = 'Discovered' LIMIT 10`);
             return jobs as Job[] || [];
         } catch (err) {
             console.error(err);
         }
     }
 
-    async updateScrapedJobs(data: ScrapedJobDetails[]) {
+    async updateScrapedJobs(data: ScrapedJobDetails<NormalizedCustomField>[]) {
         try {
             // update the status, details, description, and custom fields
             const stmt = await this.database?.prepare(`UPDATE job SET status = 'Scraped', description = ?, details = ?, custom_fields = ? WHERE id = ?`);
             data.forEach((job) => {
                 stmt?.run([job.description, JSON.stringify(job.details), JSON.stringify(job.custom_fields), job.job_id]);
+            });
+
+            return;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async updateFailedJobs(data: Job[]) {
+        try {
+            // update the status
+            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Failed' WHERE id = ?`);
+            data.forEach((job) => {
+                stmt?.run([job.id]);
             });
 
             return;

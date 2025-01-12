@@ -1,4 +1,5 @@
 import Status from "./Status";
+import Boards from "./boards";
 
 export type Job = {
     id?: number;
@@ -31,14 +32,40 @@ export type JobDetails = {
     summary: string;
 }
 
-export interface ScrapedJobDetails {
+export interface ScrapedJobDetails<T> {
     job_id?: number;
     description: string;
     details?: JobDetails;
-    custom_fields: Array<{
-        name: string;
-        fields: any;
-    }>;
+    custom_fields: Array<T>;
+    board: Boards;
 }
+
+
+
+export interface LeverCustomFieldCard {
+    name: string;
+    fields: Array<LeverCustomField>;
+}
+
+
+
+export interface LeverCustomField {
+    type: 'multiple-choice' | 'multiple-select' | 'textarea' | 'dropdown' | 'text'
+    text: string;
+    description: string;
+    required?: boolean;
+    id: string;
+    options: Array<{ text: string; optionId: string }>;
+    value?: string;
+}
+
+export interface NormalizedCustomField {
+    type: 'radio' | 'checkbox' | 'textarea' | 'select' | 'text';
+    name: string;
+    text: string;
+    possible_values?: Array<string>;
+}
+
+export type RawCustomField = LeverCustomFieldCard;
 
 export default Job;

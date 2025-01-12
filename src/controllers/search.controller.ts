@@ -54,7 +54,7 @@ export default class SearchController {
             }
 
             const searchResults = await this.searchService.query(query, { ...options, starts_at });
-            const transformedResults = await this.transformationService.searchResults({ ...searchResults, resume: options.resume });
+            const transformedResults = await this.transformationService.transformSearchResults({ ...searchResults, resume: options.resume });
 
             if (transformedResults.length === 0) {
                 console.log('No results found');

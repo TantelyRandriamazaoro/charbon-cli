@@ -1,4 +1,4 @@
-import Job, { ScrapedJobDetails } from "./Job";
+import Job, { NormalizedCustomField, ScrapedJobDetails } from "./Job";
 import { SearchEntry, SearchOptions } from "./Search";
 
 interface IDatabaseService {
@@ -7,7 +7,8 @@ interface IDatabaseService {
     storeSearch: (data: SearchEntry) => Promise<number | undefined>;
     storeDiscoveredJobs: (data: Job[]) => Promise<void>;
     getDiscoveredJobs: () => Promise<Job[] | undefined>;
-    updateScrapedJobs: (data: ScrapedJobDetails[]) => Promise<void>;
+    updateScrapedJobs: (data: ScrapedJobDetails<NormalizedCustomField>[]) => Promise<void>;
+    updateFailedJobs: (data: Job[]) => Promise<void>;
     saveJobDetails: (data: any) => Promise<any>;
 }
 
