@@ -40,7 +40,8 @@ export default class TransformationService {
 
         switch (board) {
             case 'lever':
-                return url.replace(/\/apply$/, '');
+                const [base] = url.split('?');
+                return base.replace(/\/apply$/, '');
             // case 'greenhouse':
             //     return url.replace(/\/jobs\/[0-9]+$/, '');
             // case 'workable':
