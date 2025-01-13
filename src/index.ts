@@ -7,7 +7,7 @@ import AiService from "./services/core/ai.service";
 import TransformationService from "./services/core/transformation.service";
 import SearchController from "./controllers/search.controller";
 import ScrapeController from "./controllers/scrape.controller";
-import ListController from "./controllers/list.controller";
+import ListController from "./controllers/review.controller";
 import PrepareController from "./controllers/prepare.controller";
 import ApplyController from "./controllers/apply.controller";
 import SQLiteService from "./services/databases/sqlite.service";
@@ -16,6 +16,7 @@ import BrowserService from "./services/core/browser.service";
 import FileSystemService from "./services/core/filesystem.service";
 import InquirerService from "./services/core/inquirer.service";
 import LeverService from "./services/boards/lever.service";
+import ReviewController from "./controllers/review.controller";
 
 
 const container = new Container();
@@ -49,8 +50,8 @@ container.bind(AiService).toDynamicValue((context) => {
 // Controllers
 container.bind(SearchController).toSelf();
 container.bind(ScrapeController).toSelf();
-container.bind(ListController).toSelf();
 container.bind(PrepareController).toSelf();
+container.bind(ReviewController).toSelf();
 container.bind(ApplyController).toSelf();
 
 export default container;

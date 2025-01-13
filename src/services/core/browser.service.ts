@@ -17,7 +17,7 @@ export default class BrowserService {
     ) { }
 
     public async initBrowser(): Promise<void> {
-        this.browser = await puppeteer.launch({ headless: true });
+        this.browser = await puppeteer.launch({ headless: false });
     }
 
     public async closeBrowser(): Promise<void> {
@@ -57,6 +57,12 @@ export default class BrowserService {
 
                 const page = await this.browser.newPage();
 
+                await page.setViewport({
+                    width: 1280,  // Width of the viewport
+                    height: 720,  // Height of the viewport
+                    deviceScaleFactor: 1, // Device scale factor
+                });
+
                 const scrapedData = await this.boardService.scrape(job.link, spinner, page);
 
                 spinner.text = 'Extracting job details...';
@@ -71,16 +77,50 @@ export default class BrowserService {
                 console.error('An error occurred while scraping job:', error);
                 failed.push(job);
             }
-
-            // // Sleep randomly between 1-5 seconds
-            // const sleepDuration = Math.floor(Math.random() * 5) + 1;
-            // console.log(chalk.yellow(`Sleeping for ${sleepDuration} seconds...`));
-            // await new Promise((resolve) => setTimeout(resolve, sleepDuration * 1000));
         }
 
 
         await this.closeBrowser();
 
         return { data, failed };
+    }
+
+    async batchApply(jobs: Job[]): Promise<void> {
+        await this.initBrowser();
+
+        if (!this.browser) {
+            throw new Error('Browser not initialized');
+        }
+
+        for (const job of jobs) {
+            try {
+                console.log('-------------------------');
+                console.log(chalk.blue('Applying to', job.title));
+                console.log(chalk.green(job.link));
+
+                switch (job.board) {
+                    case 'lever':
+                        this.boardService = this.leverService;
+                        break;
+                    default:
+                        console.error('Unsupported board:', job.board);
+                        continue;
+                }
+
+                const page = await this.browser.newPage();
+
+                await page.setViewport({
+                    width: 1280,  // Width of the viewport
+                    height: 1024,  // Height of the viewport
+                    deviceScaleFactor: 1, // Device scale factor
+                });
+
+                await this.boardService.apply(job, page);
+            } catch (error) {
+                console.error('An error occurred while applying to job:', error);
+            }
+        }
+
+        // await this.closeBrowser();
     }
 }

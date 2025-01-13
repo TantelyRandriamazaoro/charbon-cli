@@ -46,4 +46,17 @@ export default class InquirerService {
 
         return answers.morePages as boolean;
     }
+
+    async askForReadiness() {
+        const answers = await inquirer.prompt([
+            {
+                type: 'confirm',
+                name: 'ready',
+                message: 'Is this application ready to submit?',
+                default: true,
+            },
+        ]);
+
+        return answers.ready as boolean;
+    }
 }

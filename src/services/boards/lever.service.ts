@@ -28,7 +28,7 @@ export default class LeverService {
             currentCompany: 'input[name="org"]',
             linkedin: 'input[name="urls[LinkedIn]"]',
             github: 'input[name="urls[GitHub]"]',
-            additionalInfo: 'textarea[name="content"]',
+            additionalInfo: 'textarea[name="comments"]',
             resumeUpload: '#resume-upload-input',
             resumeUploadSuccess: '.resume-upload-success',
             submitButton: '.btn-submit',
@@ -89,33 +89,52 @@ export default class LeverService {
 
         // Upload files
         const resumeInput = await page.$(this.selectors.resumeUpload) as ElementHandle<HTMLInputElement>;
-        if (resumeInput) {
-            await resumeInput.uploadFile(`./resumes/${job.resume}`);
-
-            // Wait for the resume upload success message
-            await page.waitForSelector(this.selectors.resumeUploadSuccess);
+        if (!resumeInput) {
+            throw new Error('Resume upload input not found');
         }
+
+        await resumeInput.uploadFile(`./resumes/${job.resume}`);
+        await page.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
 
         // Fill in the resume
         if (job.custom_fields && job.custom_fields.length > 0) {
             // Fill in the custom fields
-            for (const customField of job.custom_fields) {
-                const input = await page.$(`[name="${customField.name}"]`);
-                if (!input) {
-                    throw new Error(`Could not find input for custom field: ${customField.name}`);
+            for (const question of job.custom_fields) {
+                const { answer } = job.custom_fields_answers?.find((a) => a.key === question.name) || {};
+
+                if (!answer) {
+                    throw new Error(`Answer not found for custom field: ${question.name}`);
                 }
 
-                if (!customField.value) {
-                    throw new Error(`Custom field value is required: ${customField.name}`);
-                }
+                if (question.type === 'checkbox' || question.type === 'radio') {
+                    const input = await page.$(`[name="${question.name}"][value="${answer}"]`);
+                    if (!input) {
+                        throw new Error(`Could not find input for custom field: ${question.name}`);
+                    }
 
-                await input.type(customField.value);
+                    await input.click();
+                    continue;
+
+                } else if (question.type === 'select') {
+                    const select = await page.$(`[name="${question.name}"]`);
+                    if (!select) {
+                        throw new Error(`Could not find select for custom field: ${question.name}`);
+                    }
+
+                    await select.select(answer);
+                } else {
+                    const input = await page.$(`[name="${question.name}"]`);
+                    if (!input) {
+                        throw new Error(`Could not find input for custom field: ${question.name}`);
+                    }
+
+                    await input.type(answer);
+                }
             }
         }
 
         const additionalInfo = await page.$(this.selectors.additionalInfo);
-        if (additionalInfo) {
-            await additionalInfo.type(`As part of my application, I am attaching my resume for your review. I look forward to hearing from you soon.`);
-        }
+        await additionalInfo?.type(`As part of my application, I am attaching my resume for your review. I look forward to hearing from you soon.`);
+
     }
 }

@@ -19,6 +19,7 @@
   "description": "",
   "dependencies": {
     "axios": "^1.7.9",
+    "boxen": "^8.0.1",
     "chalk": "^5.4.1",
     "cheerio": "^1.0.0",
     "commander": "^13.0.0",

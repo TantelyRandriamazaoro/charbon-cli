@@ -109,7 +109,7 @@ export default class TransformationService {
                         const transformedField: NormalizedCustomField = {
                             type: this.mapFieldType(field.type, board),
                             label: field.text,
-                            name: card.name.replace('baseTemplate', index.toString()),
+                            name: card.name.replace('baseTemplate', 'field' + index.toString()),
                             possible_values: field.options ? field.options.map((option) => option.text) : [],
                         };
 

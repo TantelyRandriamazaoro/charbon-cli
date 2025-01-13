@@ -8,9 +8,12 @@ interface IDatabaseService {
     storeDiscoveredJobs: (data: Job[]) => Promise<void>;
     getDiscoveredJobs: () => Promise<Job[] | undefined>;
     getScrapedJobs: () => Promise<Job[]>;
+    getPreparedJobs: () => Promise<Job[]>;
+    getReviewedJobs: () => Promise<Job[]>;
     updateScrapedJobs: (data: ScrapedJobDetails<NormalizedCustomField>[]) => Promise<void>;
     updateFailedJobs: (data: Job[]) => Promise<void>;
     updatePreparedJobs: (data: Job[]) => Promise<void>;
+    updateReviewedJobs: (data: Job[]) => Promise<void>;
     saveJobDetails: (data: any) => Promise<any>;
 }
 

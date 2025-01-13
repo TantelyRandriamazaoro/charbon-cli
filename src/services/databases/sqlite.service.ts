@@ -105,6 +105,41 @@ export default class SQLiteService implements IDatabaseService {
         return [];
     }
 
+    async getPreparedJobs() {
+        try {
+            const jobs = await this.database?.all(`SELECT id, title, link, details, custom_fields, custom_fields_answers FROM job WHERE status = 'Prepared' LIMIT 10`);
+            return jobs?.map((job) => {
+                return {
+                    ...job,
+                    details: JSON.parse(job.details) || [],
+                    custom_fields: JSON.parse(job.custom_fields) || [],
+                    custom_fields_answers: JSON.parse(job.custom_fields_answers) || [],
+                };
+            }) as Job[] || [];
+        } catch (err) {
+            console.error(err);
+        }
+
+        return [];
+    }
+
+    async getReviewedJobs() {
+        try {
+            const jobs = await this.database?.all(`SELECT id, title, link, custom_fields, board, resume, custom_fields_answers FROM job WHERE status = 'Reviewed' LIMIT 1`);
+            return jobs?.map((job) => {
+                return {
+                    ...job,
+                    custom_fields: JSON.parse(job.custom_fields) || [],
+                    custom_fields_answers: JSON.parse(job.custom_fields_answers) || [],
+                };
+            }) as Job[] || [];
+        } catch (err) {
+            console.error(err);
+        }
+
+        return [];
+    }
+
     async updateScrapedJobs(data: ScrapedJobDetails<NormalizedCustomField>[]) {
         try {
             // update the status, details, description, and custom fields
@@ -138,6 +173,17 @@ export default class SQLiteService implements IDatabaseService {
             const stmt = await this.database?.prepare(`UPDATE job SET status = 'Prepared', custom_fields_answers = ? WHERE id = ?`);
             data.forEach((job) => {
                 stmt?.run([JSON.stringify(job.custom_fields_answers || []), job.id]);
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async updateReviewedJobs(data: Job[]) {
+        try {
+            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Reviewed' WHERE id = ?`);
+            data.forEach((job) => {
+                stmt?.run([job.id]);
             });
         } catch (err) {
             console.error(err);

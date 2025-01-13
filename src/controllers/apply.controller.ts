@@ -13,5 +13,14 @@ export default class ApplyController {
         await this.databaseService.init();
     }
 
-    async handle() { }
+    async handle() {
+        const jobs = await this.databaseService.getReviewedJobs();
+
+        if (!jobs || jobs.length === 0) {
+            console.log('No jobs to apply');
+            return;
+        }
+
+        await this.browserService.batchApply(jobs);
+    }
 }

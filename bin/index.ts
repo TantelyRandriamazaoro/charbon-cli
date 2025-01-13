@@ -8,6 +8,8 @@ import SearchController from "@/controllers/search.controller";
 import PrepareController from "@/controllers/prepare.controller";
 import ScrapeController from "@/controllers/scrape.controller";
 import { SearchOptions } from "@/models/Search";
+import ReviewController from "@/controllers/review.controller";
+import ApplyController from "@/controllers/apply.controller";
 
 program
   .version("1.0.0")
@@ -48,16 +50,6 @@ program
   });
 
 program
-  .command("list")
-  .description("List all jobs available")
-  .option("-l, --limit <limit>", "Limit the number of results", "10")
-  .option("-b, --board <board>", "Board to search for", "lever")
-  .option("-o, --order <order>", "Order to display results", "desc")
-  .action(() => {
-    console.log("Listing all items");
-  });
-
-program
   .command("prepare")
   .description("Prepare job applications")
   .action(() => {
@@ -65,6 +57,28 @@ program
     const prepareController = container.get(PrepareController);
     prepareController.init().then(() =>
       prepareController.handle()
+    );
+  });
+
+  program
+  .command("review")
+  .description("Review all jobs available")
+  .action(() => {
+    console.log("Reviewing all jobs available");
+    const reviewController = container.get(ReviewController);
+    reviewController.init().then(() =>
+      reviewController.handle()
+    );
+  });
+
+  program
+  .command("apply")
+  .description("Apply to all jobs available")
+  .action(() => {
+    console.log("Applying to all jobs available");
+    const applyController = container.get(ApplyController);
+    applyController.init().then(() =>
+      applyController.handle()
     );
   });
 

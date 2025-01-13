@@ -7,6 +7,7 @@ import FileSystemService from "@/services/core/filesystem.service";
 import InquirerService from "@/services/core/inquirer.service";
 import chalk from "chalk";
 import { SearchOptions } from "@/models/Search";
+import boxen from "boxen";
 
 @injectable()
 export default class SearchController {
@@ -63,22 +64,25 @@ export default class SearchController {
 
             this.databaseService.storeDiscoveredJobs(transformedResults);
 
-
-            console.log(`------------------------------------`);
-            
             // Log a user friendly list of results using chalk
             transformedResults.forEach((result, index) => {
-                console.log(` `)
-                console.log(chalk.blue(result.title));
-                console.log(chalk.green(result.link));
-                console.log(` `);
-                console.log(`------------------------------------`);
+                console.log(
+                    boxen(
+                        chalk.blue(result.title) + '\n' + chalk.green(result.link),
+                        {
+                            padding: 0.5,
+                            margin: 0.5,
+                            
+                            borderStyle: 'round',
+                            borderColor: 'cyan'
+                        })
+                );
             })
 
             console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${transformedResults.length} results for ${query}`);
             console.log(`------------------------------------`);
             console.log(` `);
-            
+
         } catch (err) {
 
             console.error(err);
@@ -87,7 +91,7 @@ export default class SearchController {
                 console.log('Max pages reached.');
                 return;
             }
-            
+
             if (starts_at > 91) {
                 console.log('Consider refining your search with more specific keywords');
                 return;
