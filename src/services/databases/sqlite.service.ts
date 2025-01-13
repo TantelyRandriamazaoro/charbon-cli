@@ -89,6 +89,22 @@ export default class SQLiteService implements IDatabaseService {
         }
     }
 
+    async getScrapedJobs() {
+        try {
+            const jobs = await this.database?.all(`SELECT id, title, link, custom_fields FROM job WHERE status = 'Scraped' LIMIT 10`);
+            return jobs?.map((job) => {
+                return {
+                    ...job,
+                    custom_fields: JSON.parse(job.custom_fields) || [],
+                };
+            }) as Job[] || [];
+        } catch (err) {
+            console.error(err);
+        }
+
+        return [];
+    }
+
     async updateScrapedJobs(data: ScrapedJobDetails<NormalizedCustomField>[]) {
         try {
             // update the status, details, description, and custom fields
@@ -112,6 +128,17 @@ export default class SQLiteService implements IDatabaseService {
             });
 
             return;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async updatePreparedJobs(data: Job[]) {
+        try {
+            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Prepared', custom_fields_answers = ? WHERE id = ?`);
+            data.forEach((job) => {
+                stmt?.run([JSON.stringify(job.custom_fields_answers || []), job.id]);
+            });
         } catch (err) {
             console.error(err);
         }

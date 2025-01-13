@@ -30,4 +30,18 @@ export default class FileSystemService {
 
         return files;
     }
+
+    async getKnowledgeBase() {
+        const knowledgeBase = 'data/knowledge.txt';
+
+        // Check if the file exists
+        if (!fs.existsSync(knowledgeBase)) {
+            console.log(`The file '${knowledgeBase}' does not exist.`);
+            return;
+        }
+
+        // Read the file
+        const data = fs.readFileSync(knowledgeBase, 'utf8');
+        return data;
+    }
 }

@@ -3,7 +3,8 @@ import OpenAI from "openai";
 import IDatabaseService from "@/models/IDatabaseService";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
-import { JobDetails } from "@/models/Job";
+import { CustomFieldsAnswers, JobDetails, NormalizedCustomField } from "@/models/Job";
+import FileSystemService from "./filesystem.service";
 
 const JobDetails = z.object({
     technical_skills: z.array(z.string()),
@@ -20,6 +21,14 @@ const JobDetails = z.object({
     experience: z.string(),
     salary: z.string(),
     summary: z.string()
+});
+
+const CustomAnswers = z.object({
+    answers: z.array(z.object({
+        key: z.string(),
+        question: z.string(),
+        answer: z.string()
+    }))
 });
 
 @injectable()
@@ -67,7 +76,47 @@ export default class AiService {
         }
     }
 
-    async getCustomAnswers(fields: any) {
-        
+    async getCustomAnswers(fields: NormalizedCustomField[], knowledgeBase: string) {
+        try {
+
+            if (!knowledgeBase) {
+                throw new Error("Knowledge base not found");
+            }
+
+            const completion = await this.openai.beta.chat.completions.parse({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "system",
+                        content:
+                            "Reply to the custom questions based on the following knowledge base, using third person like 'The candidate is...' for 'textarea' questions. Be short and concise for 'text' questions. Map the `name` field to the `key` field in the response. When there are multiple possible values, choose the most relevant one.",
+                    },
+                    {
+                        role: "system",
+                        content: `Knowledge base: ` + knowledgeBase,
+                    },
+                    {
+                        role: "user",
+                        content: `Custom questions: ` + JSON.stringify(fields)
+                    }
+                ],
+                response_format: zodResponseFormat(CustomAnswers, "answers_response")
+            });
+
+            const answers_response = completion.choices[0].message;
+
+            return answers_response.parsed as { answers: CustomFieldsAnswers[]}
+
+        } catch (e: any) {
+            // Handle edge cases
+            if (e.constructor.name == "LengthFinishReasonError") {
+                // Retry with a higher max tokens
+                console.log("Too many tokens: ", e.message);
+            } else {
+                // Handle other exceptions
+                console.log("An error occurred: ", e.message);
+            }
+        }
+
     }
 }

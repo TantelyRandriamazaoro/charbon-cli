@@ -63,7 +63,9 @@ program
   .action(() => {
     console.log("Preparing job applications");
     const prepareController = container.get(PrepareController);
-    prepareController.handle();
+    prepareController.init().then(() =>
+      prepareController.handle()
+    );
   });
 
 program.parse(process.argv);

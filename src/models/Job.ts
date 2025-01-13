@@ -11,6 +11,7 @@ export type Job = {
     timestamp?: string;
     board?: string;
     custom_fields?: NormalizedCustomField[];
+    custom_fields_answers?: CustomFieldsAnswers[];
     resume?: string;
     status?: Status;
 }
@@ -65,6 +66,12 @@ export interface NormalizedCustomField {
     label: string;
     possible_values?: Array<string>;
     value?: string;
+}
+
+export interface CustomFieldsAnswers {
+    key: string;
+    question: string;
+    answer: string;
 }
 
 export type RawCustomField = LeverCustomFieldCard;

@@ -42,6 +42,7 @@ export default class BrowserService {
             try {
                 console.log('-------------------------');
                 console.log(chalk.blue('Scraping', job.title));
+                console.log(chalk.green(job.link));
 
                 switch (job.board) {
                     case 'lever':
