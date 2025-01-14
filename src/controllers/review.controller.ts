@@ -1,5 +1,6 @@
 import IDatabaseService from "@/models/IDatabaseService";
 import InquirerService from "@/services/core/inquirer.service";
+import buildMultilineOutput from "@/utils/buildMultilineOutput";
 import boxen from "boxen";
 import chalk from "chalk";
 import { inject, injectable } from "inversify";
@@ -16,8 +17,6 @@ export default class ReviewController {
     }
 
     async handle() {
-        const reviewedJobs = [];
-
         try {
             const jobs = await this.databaseService.getPreparedJobs();
 
@@ -27,23 +26,40 @@ export default class ReviewController {
             }
 
             for (const job of jobs) {
-                let output = '';
+                const { details, custom_fields, custom_fields_answers, title, link } = job;
+                const { getOutput, append } = buildMultilineOutput();
 
-                output += chalk.blue(`Reviewing job: ${job.title}`) + '\n';
-                output += chalk.green(job.link) + '\n\n';
-                output += job.details?.summary + '\n\n';
+                // Main job details
+                append(`Reviewing job: ${title}`, chalk.blue);
+                append(link, chalk.green);
+                append(details?.summary);
 
-                if (job.custom_fields) {
-                    for (const question of job.custom_fields) {
-                        const answer = job.custom_fields_answers?.find((a) => a.key === question.name);
-                        output += chalk.yellow(question.label) + '\n';
-                        output += (answer?.answer || 'No answer provided') + '\n\n';
+                // Optional job details
+
+                if (details?.location) append({ label: 'Location', message: details.location }, chalk.cyan);
+
+                if (details?.remote) append({ label: 'Remote', message: String(details.remote) }, chalk.cyan);
+
+                if (details?.job_type) append({ label: 'Job type', message: details.job_type }, chalk.cyan);
+
+                if (details?.experience) append({ label: 'Experience level', message: details.experience }, chalk.cyan);
+
+                if (details?.salary) append({ label: 'Salary', message: details.salary }, chalk.cyan);
+
+                if (details?.technical_skills) append({ label: 'Technical Skills', message: details.technical_skills.join(' | ') }, chalk.cyan);
+
+                // Custom fields
+                if (custom_fields) {
+                    for (const question of custom_fields) {
+                        const answer = custom_fields_answers?.find((a) => a.key === question.name);
+                        append(question.label, chalk.yellow);
+                        append(answer?.answer || 'No answer provided');
                     }
                 }
 
                 // Wrap the entire job output in a box
                 console.log(
-                    boxen(output, {
+                    boxen(getOutput(), {
                         padding: 1,
                         margin: 1,
                         borderStyle: 'round',
@@ -51,20 +67,12 @@ export default class ReviewController {
                     })
                 );
 
-                const ready = await this.inquirerService.askForReadiness();
-
-                if (ready) {
-                    console.log(chalk.green('Marking job application as reviewed and ready to submit...'));
-                    reviewedJobs.push(job);
-                } else {
-                    console.log(chalk.red('Skipping job application'));
-                }
+                const status = await this.inquirerService.askForStatus(job);
+                await this.databaseService.updateJobStatus(job, status);
             }
 
         } catch (err) {
             console.error(err);
         }
-
-        await this.databaseService.updateReviewedJobs(reviewedJobs);
     }
 }

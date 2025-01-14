@@ -79,6 +79,14 @@ export default class SQLiteService implements IDatabaseService {
             console.error(err);
         }
     }
+    async getDiscoveredJob(): Promise<Job | undefined> {
+        try {
+            const job = await this.database?.get(`SELECT id, title, link, board, resume, status FROM job WHERE status = 'Discovered' LIMIT 1`);
+            return job as Job;
+        } catch (err) {
+            console.error(err);
+        }
+    }
 
     async getDiscoveredJobs() {
         try {
@@ -179,18 +187,28 @@ export default class SQLiteService implements IDatabaseService {
         }
     }
 
-    async updateReviewedJobs(data: Job[]) {
+    async updateJobStatus(data: Job, status: string) {
         try {
-            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Reviewed' WHERE id = ?`);
-            data.forEach((job) => {
-                stmt?.run([job.id]);
-            });
+            const stmt = await this.database?.prepare(`UPDATE job SET status = ? WHERE id = ?`);
+            stmt?.run([status, data.id]);
         } catch (err) {
             console.error(err);
         }
     }
 
-    async saveJobDetails(data: any) {
-        return data;
+    async updateJob(data: Job) {
+        try {
+            const stmt = await this.database?.prepare(`UPDATE job SET description = ?, details = ?, custom_fields = ?, custom_fields_answers = ?, status = ? WHERE id = ?`);
+            stmt?.run([
+                data.description,
+                JSON.stringify(data.details || {}),
+                JSON.stringify(data.custom_fields || []),
+                JSON.stringify(data.custom_fields_answers || []),
+                data.status,
+                data.id
+            ]);
+        } catch (err) {
+            console.error(err);
+        }
     }
 }

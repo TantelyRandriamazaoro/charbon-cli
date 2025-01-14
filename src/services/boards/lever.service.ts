@@ -35,21 +35,17 @@ export default class LeverService {
         };
     }
 
-    private async scrapeJobDescription(page: Page): Promise<void> {
+    async scrapeJobDescription(page: Page): Promise<string> {
         await page.waitForSelector(this.selectors.description);
-        this.data.description = await page.evaluate((selectors: typeof this.selectors) => {
+        return await page.evaluate((selectors: typeof this.selectors) => {
             const descriptionElement = document.querySelector(selectors.description);
             return descriptionElement ? descriptionElement.textContent || '' : '';
         }, this.selectors);
     }
 
-    private async scrapeCustomFields(page: Page): Promise<void> {
-        // Click the "Apply" button
-        await page.click(this.selectors.applyButton);
-        await page.waitForSelector(this.selectors.applicationPage);
-
+    async scrapeCustomFields(page: Page): Promise<LeverCustomFieldCard[]> {
         // Extract custom fields
-        this.data.custom_fields = await page.evaluate((selector) => {
+        return await page.evaluate((selector) => {
             const customFields: Array<{ name: string; fields: any }> = [];
             const customFieldsElements = document.querySelectorAll(selector);
             customFieldsElements.forEach((customFieldElement) => {
@@ -59,22 +55,6 @@ export default class LeverService {
             });
             return customFields;
         }, this.selectors.fieldsData);
-    }
-
-    public async scrape(url: string, spinner: Ora, page: Page): Promise<ScrapedJobDetails<LeverCustomFieldCard>> {
-        // Navigate to the job URL
-        spinner.text = 'Navigating to job URL...';
-        await page.goto(url, { waitUntil: 'networkidle2' });
-
-        // Scrape the job description
-        spinner.text = 'Scraping job description...';
-        await this.scrapeJobDescription(page);
-
-        // Scrape custom fields
-        spinner.text = 'Scraping custom fields...';
-        await this.scrapeCustomFields(page);
-
-        return this.data;
     }
 
     public isMatch(url: string): boolean {
@@ -106,35 +86,43 @@ export default class LeverService {
                     throw new Error(`Answer not found for custom field: ${question.name}`);
                 }
 
-                if (question.type === 'checkbox' || question.type === 'radio') {
-                    const input = await page.$(`[name="${question.name}"][value="${answer}"]`);
-                    if (!input) {
-                        throw new Error(`Could not find input for custom field: ${question.name}`);
-                    }
-
-                    await input.click();
-                    continue;
-
-                } else if (question.type === 'select') {
-                    const select = await page.$(`[name="${question.name}"]`);
-                    if (!select) {
-                        throw new Error(`Could not find select for custom field: ${question.name}`);
-                    }
-
-                    await select.select(answer);
-                } else {
-                    const input = await page.$(`[name="${question.name}"]`);
-                    if (!input) {
-                        throw new Error(`Could not find input for custom field: ${question.name}`);
-                    }
-
-                    await input.type(answer);
-                }
+                await this.fillField(page, question, answer);
             }
         }
 
         const additionalInfo = await page.$(this.selectors.additionalInfo);
         await additionalInfo?.type(`As part of my application, I am attaching my resume for your review. I look forward to hearing from you soon.`);
+    }
 
+    async fillField(page: Page, question: NormalizedCustomField, answer: string) {
+        if (question.type === 'checkbox' || question.type === 'radio') {
+            const input = await page.$(`[name="${question.name}"][value="${answer}"]`);
+            if (!input) {
+                throw new Error(`Could not find input for custom field: ${question.name}`);
+            }
+
+            await input.click();
+
+        } else if (question.type === 'select') {
+            const select = await page.$(`[name="${question.name}"]`);
+            if (!select) {
+                throw new Error(`Could not find select for custom field: ${question.name}`);
+            }
+
+            await select.select(answer);
+        } else {
+            const input = await page.$(`[name="${question.name}"]`);
+            if (!input) {
+                throw new Error(`Could not find input for custom field: ${question.name}`);
+            }
+
+            // Clear the input field
+            await input.focus();
+            await input.click({ clickCount: 3 });
+            await input.press('Backspace');
+
+            // Type the answer
+            await input.type(answer);
+        }
     }
 }

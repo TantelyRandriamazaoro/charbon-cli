@@ -101,7 +101,11 @@ export default class TransformationService {
     }
 
 
-    normalizeCustomFields(data: RawCustomField[], board: Boards): NormalizedCustomField[] {
+    normalizeCustomFields(data: RawCustomField[], board?: Boards): NormalizedCustomField[] {
+        if (!board) {
+            throw new Error('Board not set');
+        }
+
         switch (board) {
             case 'lever':
                 return data.reduce((acc, card) => {

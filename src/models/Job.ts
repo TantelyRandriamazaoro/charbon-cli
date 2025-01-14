@@ -9,7 +9,7 @@ export type Job = {
     description?: string;
     details?: JobDetails;
     timestamp?: string;
-    board?: string;
+    board?: Boards;
     custom_fields?: NormalizedCustomField[];
     custom_fields_answers?: CustomFieldsAnswers[];
     resume?: string;
@@ -20,17 +20,14 @@ export type JobDetails = {
     technical_skills: string[];
     soft_skills: string[];
     isAiFriendly: boolean;
-    company_name: string;
-    company_field: string;
-    company_mission: string;
-    company_values: string;
     location: string;
     remote: boolean;
     job_type: string;
-    seniority: string;
     experience: string;
     salary: string;
     summary: string;
+    catch: string;
+    context: string;
 }
 
 export interface ScrapedJobDetails<T> {

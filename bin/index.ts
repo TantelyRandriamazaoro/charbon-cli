@@ -10,6 +10,7 @@ import ScrapeController from "@/controllers/scrape.controller";
 import { SearchOptions } from "@/models/Search";
 import ReviewController from "@/controllers/review.controller";
 import ApplyController from "@/controllers/apply.controller";
+import LiveController from "@/controllers/live.controller";
 
 program
   .version("1.0.0")
@@ -60,7 +61,7 @@ program
     );
   });
 
-  program
+program
   .command("review")
   .description("Review all jobs available")
   .action(() => {
@@ -71,7 +72,7 @@ program
     );
   });
 
-  program
+program
   .command("apply")
   .description("Apply to all jobs available")
   .action(() => {
@@ -79,6 +80,17 @@ program
     const applyController = container.get(ApplyController);
     applyController.init().then(() =>
       applyController.handle()
+    );
+  });
+
+program
+  .command("live")
+  .description("Apply to all jobs available")
+  .action(() => {
+    console.log("Applying to all jobs available");
+    const liveController = container.get(LiveController);
+    liveController.init().then(() =>
+      liveController.handle()
     );
   });
 

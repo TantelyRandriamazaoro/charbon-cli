@@ -1,26 +1,20 @@
 import { inject, injectable } from "inversify";
 import OpenAI from "openai";
-import IDatabaseService from "@/models/IDatabaseService";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { CustomFieldsAnswers, JobDetails, NormalizedCustomField } from "@/models/Job";
-import FileSystemService from "./filesystem.service";
 
 const JobDetails = z.object({
     technical_skills: z.array(z.string()),
-    soft_skills: z.array(z.string()),
     isAiFriendly: z.boolean(),
-    company_name: z.string(),
-    company_field: z.string(),
-    company_mission: z.string(),
-    company_values: z.string(),
     location: z.string(),
     remote: z.boolean(),
     job_type: z.string(),
-    seniority: z.string(),
     experience: z.string(),
     salary: z.string(),
-    summary: z.string()
+    summary: z.string(),
+    context: z.string(),
+    catch: z.string().optional()
 });
 
 const CustomAnswers = z.object({
@@ -49,7 +43,7 @@ export default class AiService {
                     {
                         role: "system",
                         content:
-                            "Extract structured data from the job description based on this schema.",
+                            "Extract structured data from the job description based on this schema. The 'context' field should contain the most important information about the job that might be useful for further prompts to reply to custom fields. The 'catch' field should contain important informations like 'add x word to the cover letter to show you read the job description'.",
                     },
                     { role: "user", content: description },
                 ],
@@ -76,11 +70,15 @@ export default class AiService {
         }
     }
 
-    async getCustomAnswers(fields: NormalizedCustomField[], knowledgeBase: string) {
+    async getCustomAnswers(fields: NormalizedCustomField[], knowledgeBase?: string, context?: string) {
         try {
 
             if (!knowledgeBase) {
                 throw new Error("Knowledge base not found");
+            }
+
+            if (!context) {
+                throw new Error("Context not found");
             }
 
             const completion = await this.openai.beta.chat.completions.parse({
@@ -89,11 +87,15 @@ export default class AiService {
                     {
                         role: "system",
                         content:
-                            "Reply to the custom questions based on the following knowledge base, using third person like 'The candidate is...' for 'textarea' questions. Be short and concise for 'text' questions. Map the `name` field to the `key` field in the response. When there are multiple possible values, choose the most relevant one.",
+                            "Reply to the custom questions based on the following knowledge base and context, using third person like 'The candidate is...' for 'textarea' questions. Be short and concise for 'text' questions. When there are multiple possible values, choose the most relevant one. Map the `name` field to the `key` field in the response, which is in the format of 'cards[{uuid}][field{index}]'",
                     },
                     {
-                        role: "system",
-                        content: `Knowledge base: ` + knowledgeBase,
+                        role: "user",
+                        content: `Knowledge base: ` + knowledgeBase
+                    },
+                    {
+                        role: "user",
+                        content: `Context: ` + context
                     },
                     {
                         role: "user",
@@ -105,7 +107,7 @@ export default class AiService {
 
             const answers_response = completion.choices[0].message;
 
-            return answers_response.parsed as { answers: CustomFieldsAnswers[]}
+            return answers_response.parsed as { answers: CustomFieldsAnswers[] }
 
         } catch (e: any) {
             // Handle edge cases

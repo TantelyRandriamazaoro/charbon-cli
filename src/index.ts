@@ -17,6 +17,7 @@ import FileSystemService from "./services/core/filesystem.service";
 import InquirerService from "./services/core/inquirer.service";
 import LeverService from "./services/boards/lever.service";
 import ReviewController from "./controllers/review.controller";
+import LiveController from "./controllers/live.controller";
 
 
 const container = new Container();
@@ -53,5 +54,6 @@ container.bind(ScrapeController).toSelf();
 container.bind(PrepareController).toSelf();
 container.bind(ReviewController).toSelf();
 container.bind(ApplyController).toSelf();
+container.bind(LiveController).toSelf();
 
 export default container;
