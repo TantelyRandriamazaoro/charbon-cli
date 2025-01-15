@@ -62,7 +62,7 @@ export default class SQLiteService implements IDatabaseService {
 
     async storeSearch(data: SearchEntry): Promise<number | undefined> {
         try {
-            const response = await this.database?.run(`INSERT INTO search (query, keywords, starts_at, board) VALUES (?, ?, ?, ?)`, [data.query, data.keywords, data.starts_at, data.board]);
+            const response = await this.database?.run(`INSERT INTO search (query, keywords, starts_at, board, country) VALUES (?, ?, ?, ?, ?)`, [data.query, data.keywords, data.starts_at, data.board, data.country]);
             return response?.lastID;
         } catch (err) {
             console.error(err);

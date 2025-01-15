@@ -14,6 +14,7 @@ export type SearchEntry = {
     keywords: string;
     starts_at: number;
     board: Boards;
+    country: string;
     timestamp?: string;
 }
 
