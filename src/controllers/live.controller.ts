@@ -48,6 +48,7 @@ export default class LiveController {
         this.spinner = ora("Preparing to process job...").start();
         try {
             this.page = await this.browserService.newPage();
+            await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
             await this.page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
 
             console.clear();

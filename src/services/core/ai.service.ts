@@ -82,7 +82,7 @@ export default class AiService {
             }
 
             const completion = await this.openai.beta.chat.completions.parse({
-                model: "gpt-4o",
+                model: "gpt-4o-mini",
                 messages: [
                     {
                         role: "system",
@@ -106,6 +106,8 @@ export default class AiService {
             });
 
             const answers_response = completion.choices[0].message;
+
+            console.log(answers_response.parsed);
 
             return answers_response.parsed as { answers: CustomFieldsAnswers[] }
 

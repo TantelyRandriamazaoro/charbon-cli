@@ -62,6 +62,7 @@ export interface NormalizedCustomField {
     name: string;
     label: string;
     possible_values?: Array<string>;
+    required?: boolean;
     value?: string;
 }
 

@@ -72,24 +72,25 @@ export default class LeverService {
         }
 
         await resumeInput.uploadFile(`./resumes/${job.resume}`);
-        await page.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
-
+        
         // Fill in the resume
         if (job.custom_fields && job.custom_fields.length > 0) {
             // Fill in the custom fields
             for (const question of job.custom_fields) {
                 const { answer } = job.custom_fields_answers?.find((a) => a.key === question.name) || {};
 
-                if (!answer) {
+                if (!answer && question.required) {
                     throw new Error(`Answer not found for custom field: ${question.name}`);
                 }
 
-                await this.fillField(page, question, answer);
+                await this.fillField(page, question, answer || 'N/A');
             }
         }
 
         const additionalInfo = await page.$(this.selectors.additionalInfo);
-        await additionalInfo?.type(`As part of my application, I am attaching my resume for your review. I look forward to hearing from you soon.`);
+        await additionalInfo?.type(`This application was automated and streamlined by "Charbon CLI", a tool I built to showcase my technical and problem-solving skills in a real-world scenario while addressing the time-consuming nature of job applications. The tool leverages a knowledge base about my professional life, the Google Custom Search JSON API for global job searches, Puppeteer for scraping and automation, and OpenAI's GPT-4 API for large data transformations and crafting tailored responses. All applications were manually reviewed to ensure accuracy and relevance.\n\nYou can explore the project on my GitHub account: https://github.com/TantelyRandriamazaoro/charbon-cli. Currently at the MVP stage, future enhancements include a GUI, user authentication, CI/CD pipelines, Terraform for configuration management, and potentially monetization. Long-term, I envision "Charbon" evolving into a robust productivity suite for job seekers, complete with AI-driven career advice, market trend analysis, and salary optimization tools.\n\nShould this align with your team's expectations, I’d be excited to discuss how my skills can contribute to you company. Regardless of your hiring decision, I’d greatly value any feedback on the project or its potential applications. Thank you for your time and consideration.\n\nBest regards,\nTantely Randriamazaoro`);
+
+        await page.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
     }
 
     async fillField(page: Page, question: NormalizedCustomField, answer: string) {
