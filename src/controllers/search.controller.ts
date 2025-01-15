@@ -70,7 +70,7 @@ export default class SearchController {
             const { success, duplicates } = await this.databaseService.storeDiscoveredJobs(transformedResults);
 
             // Log a user friendly list of results using chalk
-            transformedResults.forEach((result, index) => {
+            success.forEach((result, index) => {
                 console.log(
                     boxen(
                         chalk.blue(result.title) + '\n' + chalk.green(result.link),
@@ -84,7 +84,7 @@ export default class SearchController {
                 );
             })
 
-            console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${success} results for ${query} | ${duplicates} duplicates`);
+            console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${success.length} results for ${query}` + (duplicates > 0 ? ` | ${duplicates} duplicates` : ''));
             console.log(`------------------------------------`);
             console.log(` `);
 

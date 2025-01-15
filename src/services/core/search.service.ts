@@ -66,6 +66,7 @@ export default class SearchService {
             query: query.toLowerCase(),
             keywords: options.keywords,
             starts_at: options.starts_at || 1,
+            country: options.country || 'us',
             board: options.board
         };
 

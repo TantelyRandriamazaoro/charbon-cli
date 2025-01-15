@@ -6,7 +6,7 @@ interface IDatabaseService {
     init(): Promise<void>;
     getLastSearch: (query: string, options: SearchOptions) => Promise<SearchEntry | undefined>;
     storeSearch: (data: SearchEntry) => Promise<number | undefined>;
-    storeDiscoveredJobs: (data: Job[]) => Promise<{ success: number; duplicates: number; total: number }>;
+    storeDiscoveredJobs: (data: Job[]) => Promise<{ success: Job[]; duplicates: number; total: number }>;
     getDiscoveredJob: () => Promise<Job | undefined>;
     getDiscoveredJobs: () => Promise<Job[] | undefined>;
     getScrapedJobs: () => Promise<Job[]>;

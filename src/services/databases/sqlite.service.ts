@@ -72,12 +72,12 @@ export default class SQLiteService implements IDatabaseService {
     async storeDiscoveredJobs(data: Job[]) {
         const stmt = await this.database?.prepare(`INSERT INTO job (search_id, title, link, board, resume) VALUES (?, ?, ?, ?, ?)`);
 
-        let success: number = 0;
+        let success: Job[] = [];
         let duplicates: number = 0;
         for (const job of data) {
             try {
                 await stmt?.run([job.search_id, job.title, job.link, job.board, job.resume]);
-                success++;
+                success.push(job);
             }
             catch (err: any) {
                 if (err.code === 'SQLITE_CONSTRAINT') {
