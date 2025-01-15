@@ -70,6 +70,24 @@ This project is not yet published on npm and requires cloning or forking the rep
    ```bash
    npm install
    ```
+4. Set up the environment variables:
+   ```bash
+   cp .env.template .env
+   ```
+5. Edit the `.env` file with your API keys and other credentials.
+6. build the project:
+   ```bash
+   npm run build
+   ```
+7. Link the project to your system:
+   ```bash
+    npm link
+    ```
+8. Run the CLI:
+    ```bash
+    charbon --help
+    ```
+9. Follow the instructions to use the CLI.
 
 ## 🔧 Usage
 
@@ -105,6 +123,32 @@ charbon --help
    ```bash
    charbon live
    ```
+
+## 🚧 Roadmap
+
+Charbon CLI is an MVP aimed at quickly delivering results rather than achieving perfection. Here's a roadmap for the next set of features:
+
+1. **Publish as a Global npm Package**:
+   - Make Charbon CLI globally installable for easier access.
+
+2. **Add a GUI with Nuxt.js**:
+   - Develop a user-friendly graphical interface for those who prefer a visual workflow.
+
+3. **Backend Development**:
+   - Create a backend using Python or Nest.js.
+   - Implement user authentication and monetization features.
+
+4. **Configuration Management**:
+   - Integrate Terraform for managing infrastructure configurations.
+
+5. **CI/CD Pipelines**:
+   - Establish continuous integration and deployment pipelines for streamlined updates.
+
+6. **Containerization**:
+   - Launch the front-end and back-end in containers for scalability and portability.
+
+7. **CLI Integration with Backend**:
+   - Enable the CLI to be programmatically used as part of the backend application.
 
 ## 🤝 Contributing
 
