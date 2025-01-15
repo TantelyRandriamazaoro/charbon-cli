@@ -46,9 +46,11 @@ export default class SQLiteService implements IDatabaseService {
             }
 
             sql += `AND board = ? 
+                    AND country = ?
                     ORDER BY timestamp DESC 
                     LIMIT 1`;
             params.push(options.board);
+            params.push(options.country);
 
             const search = await this.database?.get(sql, params);
             return search as SearchEntry;
@@ -68,17 +70,32 @@ export default class SQLiteService implements IDatabaseService {
     }
 
     async storeDiscoveredJobs(data: Job[]) {
-        try {
-            const stmt = await this.database?.prepare(`INSERT INTO job (search_id, title, link, board, resume) VALUES (?, ?, ?, ?, ?)`);
-            data.forEach((job) => {
-                stmt?.run([job.search_id, job.title, job.link, job.board, job.resume]);
-            });
+        const stmt = await this.database?.prepare(`INSERT INTO job (search_id, title, link, board, resume) VALUES (?, ?, ?, ?, ?)`);
 
-            return;
-        } catch (err) {
-            console.error(err);
+        let success: number = 0;
+        let duplicates: number = 0;
+        for (const job of data) {
+            try {
+                await stmt?.run([job.search_id, job.title, job.link, job.board, job.resume]);
+                success++;
+            }
+            catch (err: any) {
+                if (err.code === 'SQLITE_CONSTRAINT') {
+                    console.log('Job already exists in the database');
+
+                    duplicates++;
+                    continue;
+                }
+            }
+        }
+
+        return {
+            success,
+            duplicates,
+            total: data.length
         }
     }
+
     async getDiscoveredJob(): Promise<Job | undefined> {
         try {
             const job = await this.database?.get(`SELECT id, title, link, board, resume, status FROM job WHERE status = 'Discovered' LIMIT 1`);

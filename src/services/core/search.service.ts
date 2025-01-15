@@ -28,6 +28,7 @@ export default class SearchService {
             cx: this.cx,
             q: `${query} ${fullQuery}`,
             start: options.starts_at || 1,
+            gl: options.country || 'us',
         });
 
         const search_id = await this.storeSearch(query, options);

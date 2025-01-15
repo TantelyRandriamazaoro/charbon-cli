@@ -44,4 +44,18 @@ export default class FileSystemService {
         const data = fs.readFileSync(knowledgeBase, 'utf8');
         return data;
     }
+
+    async getCountries() {
+        const countries = 'src/data/countries.json';
+
+        // Check if the file exists
+        if (!fs.existsSync(countries)) {
+            console.log(`The file '${countries}' does not exist.`);
+            return;
+        }
+
+        // Read the file
+        const data = fs.readFileSync(countries, 'utf8');
+        return JSON.parse(data) as { name: string; code: string; }[];
+    }
 }

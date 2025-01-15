@@ -29,8 +29,8 @@ program
   .command("search")
   .argument("<query>", "Search query")
   .option("-k, --keywords <keywords>", "Keywords to search for")
-  .option("-b, --board <board>", "Board to search for")
-  .option("-l, --limit <limit>", "Limit the number of results", "10")
+  .option("-b, --board <board>", "Board to search for", "lever")
+  .option("-c, --country <country>", "Country to search for", "us")
   .description("Search for jobs on a specific board, fetches the job description and custom fields")
   .action((query, options: SearchOptions) => {
     const searchController = container.get(SearchController);

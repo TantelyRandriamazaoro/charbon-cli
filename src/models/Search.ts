@@ -23,4 +23,5 @@ export type SearchOptions = {
     board: Boards;
     starts_at?: number;
     resume?: string;
+    country?: string;
 }

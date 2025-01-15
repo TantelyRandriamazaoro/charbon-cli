@@ -32,6 +32,11 @@ export default class SearchController {
                 options.board = selectedBoard as Boards;
             }
 
+            if (!options.country) {
+                const selectedCountry = await this.inquirerService.askForCountry();
+                options.country = selectedCountry;
+            }
+
             const lastQuery = await this.databaseService.getLastSearch(query.toLocaleLowerCase(), options);
 
             if (lastQuery) {
@@ -62,7 +67,7 @@ export default class SearchController {
                 return;
             }
 
-            this.databaseService.storeDiscoveredJobs(transformedResults);
+            const { success, duplicates } = await this.databaseService.storeDiscoveredJobs(transformedResults);
 
             // Log a user friendly list of results using chalk
             transformedResults.forEach((result, index) => {
@@ -72,14 +77,14 @@ export default class SearchController {
                         {
                             padding: 0.5,
                             margin: 0.5,
-                            
+
                             borderStyle: 'round',
                             borderColor: 'cyan'
                         })
                 );
             })
 
-            console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${transformedResults.length} results for ${query}`);
+            console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${success} results for ${query} | ${duplicates} duplicates`);
             console.log(`------------------------------------`);
             console.log(` `);
 

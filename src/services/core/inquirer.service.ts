@@ -1,12 +1,15 @@
 import Job from "@/models/Job";
 import Status from "@/models/Status";
 import inquirer from "inquirer";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
+import FileSystemService from "./filesystem.service";
 
 @injectable()
 export default class InquirerService {
 
-    constructor() {}
+    constructor(
+        @inject(FileSystemService) private filesystemService: FileSystemService
+    ) { }
 
     async askForJobBoard() {
         const answers = await inquirer.prompt([
@@ -48,7 +51,7 @@ export default class InquirerService {
 
         return answers.morePages as boolean;
     }
-    
+
     async askForStatus(job: Job): Promise<Status> {
         const readinessAnswers = await inquirer.prompt([
             {
@@ -58,7 +61,7 @@ export default class InquirerService {
                 default: true,
             },
         ]);
-    
+
         if (readinessAnswers.ready) {
             console.log('Great! The application is ready to submit.');
             return 'Ready';
@@ -75,7 +78,7 @@ export default class InquirerService {
                     ],
                 },
             ]);
-    
+
             if (followUpAnswers.reason === 'Modify some fields') {
                 console.log('The application needs some modifications.');
                 return 'Not Ready';
@@ -87,7 +90,7 @@ export default class InquirerService {
                 console.log('The applicant is not interested.');
                 return 'Not Interested';
             }
-    
+
             return 'Not Ready';
         }
     }
@@ -104,5 +107,27 @@ export default class InquirerService {
 
         return answers.nextJob as boolean;
     }
-    
+
+    async askForCountry() {
+        const countries = await this.filesystemService.getCountries();
+        
+        const answers = await inquirer.prompt([
+            {
+                type: 'search',
+                name: 'country',
+                message: 'Enter the country code to search for:',
+                source: async (input, { signal }) => {
+                    if (!input) {
+                        return [];
+                    }
+                    return countries!.map((country) => ({
+                        value: country.code,
+                        name: country.name
+                    })).filter((country) => country.name.toLowerCase().includes(input.toLowerCase()));
+                }
+            },
+        ]);
+
+        return answers.country as string;
+    }
 }

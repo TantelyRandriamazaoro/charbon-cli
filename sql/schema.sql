@@ -4,6 +4,7 @@ CREATE TABLE search (
   keywords TEXT,
   starts_at INTEGER NOT NULL DEFAULT 1, -- Tracks the page of the search
   board TEXT,
+  country TEXT,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
