@@ -11,6 +11,18 @@ export default class InquirerService {
         @inject(FileSystemService) private filesystemService: FileSystemService
     ) { }
 
+    async askForBrowserId() {
+        const answers = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'browserId',
+                message: 'Enter the browser ID:',
+            },
+        ]);
+
+        return answers.browserId as string;
+    }
+
     async askForJobBoard() {
         const answers = await inquirer.prompt([
             {

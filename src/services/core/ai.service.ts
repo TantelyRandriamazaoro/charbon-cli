@@ -21,7 +21,8 @@ const CustomAnswers = z.object({
     answers: z.array(z.object({
         key: z.string(),
         question: z.string(),
-        answer: z.string()
+        // can be an array of strings if this is a checkbox or a string
+        answer: z.union([z.string(), z.array(z.string())])
     }))
 });
 
@@ -87,7 +88,7 @@ export default class AiService {
                     {
                         role: "system",
                         content:
-                            "Reply to the custom questions based on the following knowledge base and context, using third person like 'The candidate is...' for 'textarea' questions. Be short and concise for 'text' questions. When there are multiple possible values, choose the most relevant one. Map the `name` field to the `key` field in the response, which is in the format of 'cards[{uuid}][field{index}]'",
+                            "Reply to the custom questions based on the following knowledge base and context, using third person like 'The candidate is...' for 'textarea' questions. Be short and concise for 'text' questions. When there are multiple possible values in `possible_values`, choose the most relevant one without altering the value, not even adding an extra punctuation. Map the `name` field to the `key` field in the response, which is in the format of 'cards[{uuid}][field{index}]'",
                     },
                     {
                         role: "user",
@@ -106,8 +107,6 @@ export default class AiService {
             });
 
             const answers_response = completion.choices[0].message;
-
-            console.log(answers_response.parsed);
 
             return answers_response.parsed as { answers: CustomFieldsAnswers[] }
 

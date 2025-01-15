@@ -13,7 +13,7 @@ import chalk from "chalk";
 import ora, { Ora } from "ora";
 import { inject, injectable } from "inversify";
 import inquirer from "inquirer";
-import { Page } from "puppeteer";
+import { CookieSameSite, Page } from "puppeteer";
 
 @injectable()
 export default class LiveController {
@@ -30,14 +30,14 @@ export default class LiveController {
         @inject(TransformationService) private transformationService: TransformationService,
         @inject(FileSystemService) private fileSystemService: FileSystemService,
         @inject(LeverService) private leverService: LeverService
-    ) {}
+    ) { }
 
     async init() {
         this.spinner = ora("Initializing services...").start();
         try {
             await this.databaseService.init();
-            await this.browserService.init({ headless: false });
             this.spinner?.succeed(chalk.green("Services initialized successfully."));
+            await this.browserService.init({ headless: false });
         } catch (error) {
             this.spinner?.fail(chalk.red("Failed to initialize services."));
             throw error;
@@ -48,7 +48,6 @@ export default class LiveController {
         this.spinner = ora("Preparing to process job...").start();
         try {
             this.page = await this.browserService.newPage();
-            await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
             await this.page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
 
             console.clear();
@@ -57,25 +56,51 @@ export default class LiveController {
             if (this.job) {
                 await this.processJob();
                 await this.askForModifications();
+
+                const { proceed } = await inquirer.prompt([
+                    {
+                        type: "confirm",
+                        name: "proceed",
+                        message: "Submit the application?",
+                        default: true,
+                    },
+                ]);
+    
+                if (proceed) {
+                    await this.submit();
+                    return;
+                } else {
+                    throw new Error("Job skipped");
+                }
             }
-        } catch (error) {
+        } catch (error: any) {
+            if (error.message === "Job skipped") {
+                this.spinner?.warn(chalk.yellow("Job skipped."));
+                this.job!.status = "Not Interested";
+                return;
+            }
+
+            if (error.message === "Not Found") {
+                this.spinner?.fail(chalk.yellow("Job not found."));
+                this.job!.status = "Not Found";
+                return;
+            }
+
             this.spinner?.fail(chalk.red("Error encountered during job handling."));
             console.error(chalk.red(error));
         } finally {
             if (this.job) {
                 console.log(chalk.blue("Job processing completed."));
                 await this.databaseService.updateJob(this.job);
-                this.job = undefined;
 
                 const nextJob = await this.inquirerService.askForNextJob();
 
                 if (nextJob) {
                     await this.page?.close();
+                    this.job = undefined;
                     await this.handle();
                 }
             }
-
-            await this.browserService.closeBrowser();
         }
     }
 
@@ -118,15 +143,17 @@ export default class LiveController {
         ]);
 
         if (!proceed) {
-            console.log(chalk.blue("Skipping job..."));
-            this.job!.status = "Not Interested";
-            return;
+            throw new Error("Job skipped");
         }
 
         await this.navigateToApplicationPage();
-        await this.handleCustomFields();
 
+        this.spinner?.start("Uploading resume...");
+        await this.boardService?.uploadResume(this.job!, this.page!)
+        this.spinner?.succeed(chalk.green("Resume uploaded."));
+        await this.handleCustomFields();
         await this.boardService?.apply(this.job!, this.page!);
+        await this.boardService?.isResumeUploaded(this.page!);
     }
 
     private async navigateToJobPage() {
@@ -194,8 +221,8 @@ export default class LiveController {
     private async handleCustomFields() {
         const fields = await this.boardService!.scrapeCustomFields(this.page!);
 
+        this.spinner?.start("Processing custom fields...");
         if (fields.length > 0) {
-            this.spinner?.start("Processing custom fields...");
             this.job!.custom_fields = this.transformationService.normalizeCustomFields(fields, this.job!.board);
 
             const knowledgeBase = await this.fileSystemService.getKnowledgeBase();
@@ -208,7 +235,7 @@ export default class LiveController {
             this.job!.custom_fields_answers = answers;
             this.spinner?.succeed(chalk.green("Custom fields processed."));
         } else {
-            this.spinner?.warn(chalk.yellow("No custom fields found."));
+            this.spinner?.succeed(chalk.green("No custom fields found."));
         }
     }
 
@@ -223,17 +250,16 @@ export default class LiveController {
                     type: "list",
                     name: "action",
                     message:
-                        "Click on any of the questions to regenerate. If you are satisfied with the answers, click on Submit",
+                        "Click on any of the questions to regenerate. If you are satisfied with the answers, press submit.",
                     choices: [
                         ...this.job.custom_fields.map((field) => field.label),
-                        "Submit",
+                        "All good, Proceed to Submit ✅",
                     ],
                 },
             ]);
 
-            if (nextAction.action === "Submit") {
-                this.job.status = "Applied";
-                console.log(chalk.green("Job application submitted."));
+            if (nextAction.action === "All good, Proceed to Submit ✅") {
+                return;
             } else {
                 const question = this.job.custom_fields.find(
                     (field) => field.label === nextAction.action
@@ -261,5 +287,14 @@ export default class LiveController {
                 await this.askForModifications();
             }
         }
+    }
+
+    private async submit() {
+        this.spinner?.start("Submitting application...");
+
+        await this.boardService?.submitApplication(this.page!);
+        this.job!.status = "Applied";
+
+        this.spinner?.succeed(chalk.green("Application submitted."));
     }
 }
