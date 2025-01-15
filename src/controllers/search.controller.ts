@@ -84,7 +84,7 @@ export default class SearchController {
                 );
             })
 
-            console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${success.length} results for ${query}` + (duplicates > 0 ? ` | ${duplicates} duplicates` : ''));
+            console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${success.length} results for ${query}` + (duplicates > 0 ? ` | ${duplicates} duplicate(s)` : ''));
             console.log(`------------------------------------`);
             console.log(` `);
 
