@@ -65,8 +65,6 @@ export default class LeverService {
     }
 
     async apply(job: Job, page: Page) {
-        await page.goto(job.link + '/apply', { waitUntil: 'networkidle2' });
-
         // Upload files
         const resumeInput = await page.$(this.selectors.resumeUpload) as ElementHandle<HTMLInputElement>;
         if (!resumeInput) {
