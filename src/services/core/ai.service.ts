@@ -82,7 +82,7 @@ export default class AiService {
             }
 
             const completion = await this.openai.beta.chat.completions.parse({
-                model: "gpt-4o-mini",
+                model: "gpt-4o",
                 messages: [
                     {
                         role: "system",
