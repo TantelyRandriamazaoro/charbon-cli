@@ -60,7 +60,7 @@ This project is not yet published on npm and requires cloning or forking the rep
 ### Steps:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/charbon-cli.git
+   git clone https://github.com/TantelyRandriamazaoro/charbon-cli.git
    ```
 2. Navigate to the project directory:
    ```bash
