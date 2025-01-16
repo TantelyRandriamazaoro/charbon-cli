@@ -4,3 +4,4 @@ dist
 data
 !src/data
 resumes
+config/input.ts
