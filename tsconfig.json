@@ -36,6 +36,9 @@
       "@constants/*": [
         "src/constants/*"
       ],
+      "@config/*": [
+        "config/*"
+      ],
     }
   },
   "tsc-alias": {
@@ -43,7 +46,8 @@
   },
   "include": [
     "src/**/*.ts",
-    "bin/**/*.ts"
+    "bin/**/*.ts",
+    "config/**/*ts"
   ], // Files to include
   "exclude": [
     "node_modules",

@@ -2,6 +2,8 @@ import Job, { LeverCustomFieldCard, NormalizedCustomField, ScrapedJobDetails } f
 import { inject, injectable } from "inversify";
 import { Ora } from "ora";
 import { ElementHandle, Page } from "puppeteer";
+import { cover, personal_info } from "@config/input";
+
 import TransformationService from "../core/transformation.service";
 
 @injectable()
@@ -24,7 +26,7 @@ export default class LeverService {
             name: 'input[name="name"]',
             email: 'input[name="email"]',
             phone: 'input[name="phone"]',
-            location: 'input[name="location"]',
+            location: '[data-qa="location-input"]',
             currentCompany: 'input[name="org"]',
             linkedin: 'input[name="urls[LinkedIn]"]',
             github: 'input[name="urls[GitHub]"]',
@@ -78,25 +80,39 @@ export default class LeverService {
     }
 
     async apply(job: Job, page: Page) {
-        // Fill in the resume
-        if (job.custom_fields && job.custom_fields.length > 0) {
-            // Fill in the custom fields
-            for (const question of job.custom_fields) {
-                const { answer } = job.custom_fields_answers?.find((a) => a.key === question.name) || {};
 
-                if (!answer && question.required) {
-                    throw new Error(`Answer not found for custom field: ${question.name}`);
-                }
-
-                await this.fillField(page, question, answer || 'N/A');
-            }
-        }
-
-        const additionalInfo = await page.$(this.selectors.additionalInfo);
-        await additionalInfo?.type(`This application was assisted and streamlined by "Charbon CLI", an AI-powered automation tool I built to showcase my technical and problem-solving skills in a real-world scenario while addressing the time-consuming nature of job applications. The tool leverages a knowledge base about my professional life, the Google Custom Search JSON API for global job searches, Puppeteer for scraping and automation, and OpenAI's GPT-4 API for large data transformations and crafting tailored responses. All applications were manually reviewed to ensure accuracy and relevance.\nShould the skills and technologies used in this project align with what your team is looking for in a candidate, I would be thrilled to discuss how I can contribute to your company. Regardless of your hiring decision, I would greatly appreciate any feedback on the project or its potential applications.\n\nShould you be interested in exploring the project, you can find it on my GitHub account: https://github.com/TantelyRandriamazaoro/charbon-cli. Currently at the MVP stage to allow me to apply to jobs more efficiently, I have a roadmap for expanding the tool further to have a GUI, CI/CD, Configuration Management, User Authentication and eventually monetization. That is until I can land my next job, which hopefully will be with your company. Thank you for your time and consideration.\n\nBest regards,\nTantely Randriamazaoro`);
     }
 
-    async fillField(page: Page, question: NormalizedCustomField, answer: string | string[]) {
+    async fillPersonalInfo(page: Page) {
+        const fields = [
+            { selector: this.selectors.name, value: `${personal_info.first_name} ${personal_info.last_name}` },
+            { selector: this.selectors.email, value: personal_info.email },
+            { selector: this.selectors.phone, value: personal_info.phone },
+            // { selector: this.selectors.location, value: personal_info.location },
+            { selector: this.selectors.currentCompany, value: personal_info.current_company },
+            { selector: this.selectors.linkedin, value: personal_info.linkedin },
+            { selector: this.selectors.github, value: personal_info.github }
+        ];
+
+        // Wait for a moment to let Lever auto-fill the fields
+        for (const field of fields) {
+            if (field.selector && field.value) {
+                await page.evaluate((selector, value) => {
+                    const input = document.querySelector(selector) as HTMLInputElement;
+                    if (input) {
+                        input.value = value;
+                    }
+                }, field.selector, field.value);
+            }
+        }
+    }
+
+    async fillCover(page: Page) {
+        const additionalInfo = await page.$(this.selectors.additionalInfo);
+        await additionalInfo?.type(cover);
+    }
+
+    async fillCustomField(page: Page, question: NormalizedCustomField, answer: string | string[]) {
         if (question.type === 'checkbox') {
             const values = Array.isArray(answer) ? answer : [answer];
 
@@ -136,6 +152,20 @@ export default class LeverService {
 
             // Type the answer
             await input.type(answer);
+        }
+    }
+
+    async fillCustomFields(job: Job, page: Page) {
+        // Fill in the resume
+        if (job.custom_fields && job.custom_fields.length > 0) {
+            // Fill in the custom fields
+            for (const question of job.custom_fields) {
+                const { answer } = job.custom_fields_answers?.find((a) => a.key === question.name) || {};
+
+                if (answer) {
+                    await this.fillCustomField(page, question, answer);
+                }
+            }
         }
     }
 

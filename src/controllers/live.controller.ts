@@ -55,8 +55,25 @@ export default class LiveController {
 
             if (this.job) {
                 await this.processJob();
-                await this.askForModifications();
-                await this.submit();
+                if (this.job.custom_fields && this.job.custom_fields.length > 0) {
+                    await this.askForModifications();
+                    await this.submit();
+                } else {
+                    const { proceed } = await inquirer.prompt([
+                        {
+                            type: "confirm",
+                            name: "proceed",
+                            message: "Do you want to submit the application?",
+                            default: true,
+                        },
+                    ]);
+
+                    if (proceed) {
+                        await this.submit(); // Submit application
+                    } else {
+                        throw new Error("Job skipped");
+                    }
+                }
             }
         } catch (error: any) {
             if (error.message === "Job skipped") {
@@ -148,11 +165,24 @@ export default class LiveController {
 
 
         await this.handleCustomFields();
-        await this.boardService?.apply(this.job!, this.page!);
+
+        if (this.job?.custom_fields?.length) {
+            this.spinner?.start("Filling custom fields...");
+            await this.boardService?.fillCustomFields(this.job!, this.page!);
+            this.spinner?.succeed(chalk.green("Custom fields filled."));
+        }
+
+        this.spinner?.start("Filling out cover letter...");
+        await this.boardService?.fillCover(this.page!);
+        this.spinner?.succeed(chalk.green("Cover letter filled."));
 
         this.spinner?.start("Checking if resume was uploaded...");
         await this.boardService?.isResumeUploaded(this.page!);
         this.spinner?.succeed(chalk.green("Resume uploaded successfully."));
+
+        this.spinner?.start("Filling out personal information...");
+        await this.boardService?.fillPersonalInfo(this.page!);
+        this.spinner?.succeed(chalk.green("Personal information filled."));
     }
 
     private async navigateToJobPage() {
@@ -251,14 +281,17 @@ export default class LiveController {
                     message:
                         "Click on any of the questions to regenerate. If you are satisfied with the answers, press submit.",
                     choices: [
-                        "All good, Proceed to Submit ✅",
+                        "✅ All good, Proceed to Submit",
+                        "❌ Don't submit, I've changed my mind",
                         ...this.job.custom_fields.map((field) => field.label)
                     ],
                 },
             ]);
 
-            if (nextAction.action === "All good, Proceed to Submit ✅") {
+            if (nextAction.action === "✅ All good, Proceed to Submit") {
                 return;
+            } else if (nextAction.action === "❌ Don't submit, I've changed my mind") {
+                throw new Error("Job skipped");
             } else {
                 const { instructions } = await inquirer.prompt([
                     {
@@ -289,7 +322,7 @@ export default class LiveController {
                     throw new Error("Answers not found");
                 }
 
-                await this.boardService?.fillField(this.page, question, answers[0].answer);
+                await this.boardService?.fillCustomField(this.page, question, answers[0].answer);
 
                 console.log(chalk.cyan("Custom field updated."));
                 await this.askForModifications();
