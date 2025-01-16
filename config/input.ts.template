@@ -1,0 +1,15 @@
+// This is a template file that will be used to generate the actual input.ts file that will be used by the application. The actual input.ts file will be ignored by git, so you can safely add your personal information here.
+export const personal_info = {
+    first_name: "John",
+    last_name: "Doe",
+    location: "New York, NY, USA",
+    email: "john@example.com",
+    linkedin: "https://linkedin.com/in/yourprofile/",
+    github: "https://github.com/yourusername",
+    website: "https://yourwebsite.com",
+    address: "123 Main St, New York, NY 10001",
+    phone: "+1234567890",
+    current_company: "Your Current Company",
+}
+
+export const cover = `Write your cover letter here.`
