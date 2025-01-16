@@ -230,7 +230,7 @@ export default class LiveController {
                 throw new Error("Knowledge base not found");
             }
 
-            const { answers } = (await this.aiService.getCustomAnswers(this.job!.custom_fields, knowledgeBase, this.job!.details?.context)) || {};
+            const { answers } = (await this.aiService.getCustomAnswers(this.job!.custom_fields, knowledgeBase, this.job!.details)) || {};
             this.job!.custom_fields_answers = answers;
             this.spinner?.succeed(chalk.green("Custom fields processed."));
         } else {
@@ -283,7 +283,7 @@ export default class LiveController {
                     throw new Error("Knowledge base not found");
                 }
 
-                const { answers } = (await this.aiService.getCustomAnswers([question], knowledgeBase, this.job.details?.context, instructions)) || {};
+                const { answers } = (await this.aiService.getCustomAnswers([question], knowledgeBase, this.job.details, instructions)) || {};
 
                 if (!answers || answers.length === 0) {
                     throw new Error("Answers not found");

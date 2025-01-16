@@ -71,14 +71,14 @@ export default class AiService {
         }
     }
 
-    async getCustomAnswers(fields: NormalizedCustomField[], knowledgeBase?: string, context?: string, instructions?: string) {
+    async getCustomAnswers(fields: NormalizedCustomField[], knowledgeBase?: string, details?: JobDetails, instructions?: string) {
         try {
 
             if (!knowledgeBase) {
                 throw new Error("Knowledge base not found");
             }
 
-            if (!context) {
+            if (!details) {
                 throw new Error("Context not found");
             }
 
@@ -96,7 +96,7 @@ export default class AiService {
                     },
                     {
                         role: "user",
-                        content: `Context: ` + context
+                        content: `Job Details: ` + JSON.stringify(details)
                     },
                     {
                         role: "user",
