@@ -71,7 +71,7 @@ export default class AiService {
         }
     }
 
-    async getCustomAnswers(fields: NormalizedCustomField[], knowledgeBase?: string, context?: string) {
+    async getCustomAnswers(fields: NormalizedCustomField[], knowledgeBase?: string, context?: string, instructions?: string) {
         try {
 
             if (!knowledgeBase) {
@@ -83,7 +83,7 @@ export default class AiService {
             }
 
             const completion = await this.openai.beta.chat.completions.parse({
-                model: "gpt-4o-mini",
+                model: instructions ? "gpt-4o" : "gpt-4o-mini",
                 messages: [
                     {
                         role: "system",
@@ -101,6 +101,10 @@ export default class AiService {
                     {
                         role: "user",
                         content: `Custom questions: ` + JSON.stringify(fields)
+                    },
+                    {
+                        role: "user",
+                        content: (instructions ? `Important Instructions: ` + instructions : "")
                     }
                 ],
                 response_format: zodResponseFormat(CustomAnswers, "answers_response")

@@ -56,22 +56,7 @@ export default class LiveController {
             if (this.job) {
                 await this.processJob();
                 await this.askForModifications();
-
-                const { proceed } = await inquirer.prompt([
-                    {
-                        type: "confirm",
-                        name: "proceed",
-                        message: "Submit the application?",
-                        default: true,
-                    },
-                ]);
-    
-                if (proceed) {
-                    await this.submit();
-                    return;
-                } else {
-                    throw new Error("Job skipped");
-                }
+                await this.submit();
             }
         } catch (error: any) {
             if (error.message === "Job skipped") {
@@ -93,13 +78,15 @@ export default class LiveController {
                 console.log(chalk.blue("Job processing completed."));
                 await this.databaseService.updateJob(this.job);
 
-                const nextJob = await this.inquirerService.askForNextJob();
 
-                if (nextJob) {
+                this.spinner.start("Loading the next job...");
+                setTimeout(async () => {
                     await this.page?.close();
                     this.job = undefined;
+
+                    this.spinner?.succeed(chalk.green("Next job loaded."));
                     await this.handle();
-                }
+                }, 2000);
             }
         }
     }
@@ -130,6 +117,13 @@ export default class LiveController {
 
     private async processJob() {
         await this.navigateToJobPage();
+
+        const title = await this.page?.title();
+
+        if (title!.includes('404')) {
+            throw new Error("Not Found");
+        }
+
         await this.extractJobDetails();
         this.logJobDetails();
 
@@ -151,9 +145,14 @@ export default class LiveController {
         this.spinner?.start("Uploading resume...");
         await this.boardService?.uploadResume(this.job!, this.page!)
         this.spinner?.succeed(chalk.green("Resume uploaded."));
+
+
         await this.handleCustomFields();
         await this.boardService?.apply(this.job!, this.page!);
+
+        this.spinner?.start("Checking if resume was uploaded...");
         await this.boardService?.isResumeUploaded(this.page!);
+        this.spinner?.succeed(chalk.green("Resume uploaded successfully."));
     }
 
     private async navigateToJobPage() {
@@ -252,8 +251,8 @@ export default class LiveController {
                     message:
                         "Click on any of the questions to regenerate. If you are satisfied with the answers, press submit.",
                     choices: [
-                        ...this.job.custom_fields.map((field) => field.label),
                         "All good, Proceed to Submit ✅",
+                        ...this.job.custom_fields.map((field) => field.label)
                     ],
                 },
             ]);
@@ -261,6 +260,15 @@ export default class LiveController {
             if (nextAction.action === "All good, Proceed to Submit ✅") {
                 return;
             } else {
+                const { instructions } = await inquirer.prompt([
+                    {
+                        type: "input",
+                        name: "instructions",
+                        message: "Please write any instructions for the AI to regenerate the answer.",
+                        default: "Make it better, please.",
+                    },
+                ]);
+
                 const question = this.job.custom_fields.find(
                     (field) => field.label === nextAction.action
                 );
@@ -275,7 +283,7 @@ export default class LiveController {
                     throw new Error("Knowledge base not found");
                 }
 
-                const { answers } = (await this.aiService.getCustomAnswers([question], knowledgeBase, this.job.details?.context)) || {};
+                const { answers } = (await this.aiService.getCustomAnswers([question], knowledgeBase, this.job.details?.context, instructions)) || {};
 
                 if (!answers || answers.length === 0) {
                     throw new Error("Answers not found");

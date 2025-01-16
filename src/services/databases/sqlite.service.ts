@@ -81,8 +81,6 @@ export default class SQLiteService implements IDatabaseService {
             }
             catch (err: any) {
                 if (err.code === 'SQLITE_CONSTRAINT') {
-                    console.log('Job already exists in the database');
-
                     duplicates++;
                     continue;
                 }
