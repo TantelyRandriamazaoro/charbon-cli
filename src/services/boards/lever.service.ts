@@ -29,6 +29,7 @@ export default class LeverService {
             location: '[data-qa="location-input"]',
             currentCompany: 'input[name="org"]',
             linkedin: 'input[name="urls[LinkedIn]"]',
+            linkedinProfile: 'input[name="urls[LinkedIn Profile"]',
             github: 'input[name="urls[GitHub]"]',
             additionalInfo: 'textarea[name="comments"]',
             resumeUpload: '#resume-upload-input',
@@ -91,6 +92,7 @@ export default class LeverService {
             // { selector: this.selectors.location, value: personal_info.location },
             { selector: this.selectors.currentCompany, value: personal_info.current_company },
             { selector: this.selectors.linkedin, value: personal_info.linkedin },
+            { selector: this.selectors.linkedinProfile, value: personal_info.linkedin },
             { selector: this.selectors.github, value: personal_info.github }
         ];
 
