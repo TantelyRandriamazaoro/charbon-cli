@@ -60,4 +60,28 @@ export default class LogService {
             })
         );
     }
+
+    logAnsweredQuestions(job: Job) {
+        const { custom_fields, custom_fields_answers } = job;
+        const { getOutput, append } = buildMultilineOutput();
+
+        // Custom fields
+        if (custom_fields) {
+            for (const question of custom_fields) {
+                const answer = custom_fields_answers?.find((a) => a.key === question.name);
+                append(question.label, chalk.yellow);
+                append(answer?.answer || 'No answer provided');
+            }
+        }
+
+        // Wrap the entire job output in a box
+        console.log(
+            boxen(getOutput(), {
+                padding: 1,
+                margin: 1,
+                borderStyle: 'round',
+                borderColor: 'cyan',
+            })
+        );
+    }
 }

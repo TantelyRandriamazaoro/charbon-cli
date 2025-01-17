@@ -64,6 +64,7 @@ export default class LiveController {
 
             if (this.job) {
                 await this.processJob();
+                
                 if (this.job.custom_fields && this.job.custom_fields.length > 0) {
                     await this.askForModifications();
                     await this.submit();
@@ -215,6 +216,8 @@ export default class LiveController {
         this.spinner?.start("Filling out cover letter...");
         await this.boardService?.fillCover(this.page!);
         this.spinner?.succeed(chalk.green("Cover letter filled."));
+
+
     }
 
     private async navigateToJobPage() {
@@ -263,6 +266,9 @@ export default class LiveController {
         }
 
         if (this.job?.custom_fields && this.job.custom_fields.length > 0) {
+            console.clear();
+            this.logService.logAnsweredQuestions(this.job);
+            
             const nextAction = await inquirer.prompt([
                 {
                     type: "list",
