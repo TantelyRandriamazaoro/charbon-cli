@@ -195,28 +195,12 @@ export default class LeverService {
 
         await submitButton.click();
 
-        try {
-            await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-            // Check if url suffix is /thanks
-            const url = page.url();
+        await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+        // Check if url suffix is /thanks
+        const url = page.url();
 
-            if (!url.includes('/thanks')) {
-                throw new Error('Application not submitted');
-            }
-        } catch (error) {
-
-                const submitted = await inquirer.prompt({
-                    type: 'confirm',
-                    name: 'submitted',
-                    message: 'It sure went silent after you clicked the submit button. Did the application go through?',
-                    default: true
-                });
-
-                if (!submitted.submitted) {
-                    throw new Error('Application not submitted');
-                }
+        if (!url.includes('/thanks')) {
+            throw new Error('Application not submitted');
         }
-
-
     }
 }

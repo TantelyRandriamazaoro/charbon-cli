@@ -64,7 +64,7 @@ export default class LiveController {
 
             if (this.job) {
                 await this.processJob();
-                
+
                 if (this.job.custom_fields && this.job.custom_fields.length > 0) {
                     await this.askForModifications();
                     await this.submit();
@@ -266,9 +266,8 @@ export default class LiveController {
         }
 
         if (this.job?.custom_fields && this.job.custom_fields.length > 0) {
-            console.clear();
             this.logService.logAnsweredQuestions(this.job);
-            
+
             const nextAction = await inquirer.prompt([
                 {
                     type: "list",
@@ -328,9 +327,23 @@ export default class LiveController {
     private async submit() {
         this.spinner?.start("Submitting application...");
 
-        await this.boardService?.submitApplication(this.page!);
+        try {
+            await this.boardService?.submitApplication(this.page!);
+            this.spinner?.succeed(chalk.green("Application submitted."));
+        } catch (error) {
+            this.spinner?.warn(chalk.yellow("Timeout occurred. Please check the application status."));
+            const submitted = await inquirer.prompt({
+                type: 'confirm',
+                name: 'submitted',
+                message: 'It sure went silent after you clicked the submit button. Did the application go through?',
+                default: true
+            });
+
+            if (!submitted.submitted) {
+                throw new Error('Application not submitted');
+            }
+        }
         this.job!.status = "Applied";
 
-        this.spinner?.succeed(chalk.green("Application submitted."));
     }
 }
