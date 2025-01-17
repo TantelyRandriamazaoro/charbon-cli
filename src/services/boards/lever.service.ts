@@ -5,6 +5,7 @@ import { ElementHandle, Page } from "puppeteer";
 import { cover, lever, personal_info } from "@config/input";
 
 import TransformationService from "../core/transformation.service";
+import inquirer from "inquirer";
 
 @injectable()
 export default class LeverService {
@@ -194,14 +195,28 @@ export default class LeverService {
 
         await submitButton.click();
 
-        // Wait for the application to be submitted
-        await page.waitForNavigation({ waitUntil: 'domcontentloaded' })
+        try {
+            await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+            // Check if url suffix is /thanks
+            const url = page.url();
 
-        // Check if url suffix is /thanks
-        const url = page.url();
+            if (!url.includes('/thanks')) {
+                throw new Error('Application not submitted');
+            }
+        } catch (error) {
 
-        if (!url.includes('/thanks')) {
-            throw new Error('Application not submitted');
+                const submitted = await inquirer.prompt({
+                    type: 'confirm',
+                    name: 'submitted',
+                    message: 'It sure went silent after you clicked the submit button. Did the application go through?',
+                    default: true
+                });
+
+                if (!submitted.submitted) {
+                    throw new Error('Application not submitted');
+                }
         }
+
+
     }
 }

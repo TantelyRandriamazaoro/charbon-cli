@@ -14,6 +14,13 @@ import ora, { Ora } from "ora";
 import { inject, injectable } from "inversify";
 import inquirer from "inquirer";
 import { CookieSameSite, Page } from "puppeteer";
+import LogService from "@/services/core/log.service";
+
+enum Actions {
+    PROCEED = "PROCEED",
+    SKIP = "SKIP",
+    DUPLICATE = "DUPLICATE"
+}
 
 @injectable()
 export default class LiveController {
@@ -29,7 +36,8 @@ export default class LiveController {
         @inject(InquirerService) private inquirerService: InquirerService,
         @inject(TransformationService) private transformationService: TransformationService,
         @inject(FileSystemService) private fileSystemService: FileSystemService,
-        @inject(LeverService) private leverService: LeverService
+        @inject(LeverService) private leverService: LeverService,
+        @inject(LogService) private logService: LogService
     ) { }
 
     async init() {
@@ -83,8 +91,18 @@ export default class LiveController {
             }
 
             if (error.message === "Not Found") {
-                this.spinner?.fail(chalk.yellow("Job not found."));
+                this.spinner?.fail(chalk.red("Job not found."));
                 this.job!.status = "Not Found";
+                return;
+            }
+
+            if (error.message === "Job already applied") {
+                this.spinner?.warn(chalk.yellow("Job already applied."));
+                this.job!.status = "Applied";
+                return;
+            }
+
+            if (error.message === "No jobs to process.") {
                 return;
             }
 
@@ -113,12 +131,12 @@ export default class LiveController {
 
         if (!this.job) {
             this.spinner?.fail(chalk.yellow("No jobs to process."));
-            return;
+            throw new Error("No jobs to process.");
         }
 
         if (!this.job.board) {
             this.spinner?.fail(chalk.yellow("Job board not set."));
-            return;
+            throw new Error("Job board not set.");
         }
 
         this.spinner?.succeed(chalk.green("Job retrieved successfully."));
@@ -142,19 +160,26 @@ export default class LiveController {
         }
 
         await this.extractJobDetails();
-        this.logJobDetails();
+        this.logService.logJobDetails(this.job!);
 
-        const { proceed } = await inquirer.prompt([
+        const { action } = await inquirer.prompt([
             {
-                type: "confirm",
-                name: "proceed",
-                message: "Are you interested in this job?",
-                default: true,
+                type: "list",
+                name: "action",
+                message: "Do you want to proceed with the application?",
+                choices: [
+                    { name: "✅ Yes, proceed", value: Actions.PROCEED },
+                    { name: "❌ No, skip this job", value: Actions.SKIP },
+                    { name: "❌ No, I have already applied", value: Actions.DUPLICATE },
+                ],
+                default: Actions.PROCEED,
             },
         ]);
 
-        if (!proceed) {
+        if (action === Actions.SKIP) {
             throw new Error("Job skipped");
+        } else if (action === Actions.DUPLICATE) {
+            throw new Error("Job already applied");
         }
 
         await this.navigateToApplicationPage();
@@ -191,49 +216,6 @@ export default class LiveController {
         this.job!.description = await this.boardService!.scrapeJobDescription(this.page!);
         this.job!.details = await this.aiService.getJobDetails(this.job!.description);
         this.spinner?.succeed(chalk.green("Job details extracted."));
-    }
-
-    private logJobDetails() {
-        const { getOutput, append } = buildMultilineOutput();
-        const details = this.job?.details;
-
-        append(`Reviewing job: ${this.job?.title}`, chalk.blue);
-        append(this.job?.link, chalk.green);
-        append(details?.summary);
-
-        if (details?.location) append({ label: "Location", message: details.location }, chalk.cyan);
-
-        if (details?.remote !== undefined)
-            append({ label: "Remote", message: String(details.remote) }, chalk.cyan);
-
-        if (details?.job_type)
-            append({ label: "Job type", message: details.job_type }, chalk.cyan);
-
-        if (details?.experience)
-            append({ label: "Experience level", message: details.experience }, chalk.cyan);
-
-        if (details?.salary)
-            append({ label: "Salary", message: details.salary }, chalk.cyan);
-
-        if (details?.isAiFriendly !== undefined)
-            append({ label: "AI Friendly", message: String(details.isAiFriendly) }, chalk.cyan);
-
-        if (details?.technical_skills)
-            append(
-                { label: "Technical Skills", message: details.technical_skills.join(" | ") },
-                chalk.cyan
-            );
-
-        if (details?.catch) append({ label: "Catch", message: details.catch }, chalk.red);
-
-        console.log(
-            boxen(getOutput(), {
-                padding: 1,
-                margin: 1,
-                borderStyle: "round",
-                borderColor: "cyan",
-            })
-        );
     }
 
     private async navigateToApplicationPage() {
