@@ -23,46 +23,86 @@ export default class BrowserService {
     ) { }
 
     public async init(options: { headless: boolean }): Promise<void> {
+        const endpointUrl = 'http://127.0.0.1:9222/json/version';
+    
         if (options.headless) {
-            this.browser = await puppeteer.launch({
-                headless: true
-            });
+            this.browser = await puppeteer.launch({ headless: true });
+            return;
+        }
+    
+        // Check for existing browser
+        let browserId = await this.checkForExistingBrowser(endpointUrl);
+        if (browserId) {
+            console.log(chalk.green(`Connected to existing browser. Browser ID: ${browserId}`));
         } else {
-            // Using a custom Chrome instance to resolve hCaptcha cookie issues and keep the browser open.
-
-            // Check current OS
-            const os = process.platform;
-            let command = '';
-
-            if (os === 'darwin') {
-                command = `/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=$(mktemp -d -t 'chrome-remote_data_dir')`;
-            } else if (os === 'win32') {
-                command = `start chrome --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=$(mktemp -d -t 'chrome-remote_data_dir')`;
-            } else {
-                console.error(chalk.red('Unsupported OS:', os));
+            // Launch a new browser if no existing one is found
+            const command = this.getBrowserLaunchCommand();
+            if (!command) {
+                console.error(chalk.red('Unsupported OS:', process.platform));
                 return;
             }
-
-            try {
-                // Start Chrome process
-                this.runCommand(command);
-
-                // Wait for a short duration to allow Chrome to initialize
-                await new Promise((resolve) => setTimeout(resolve, 3000));
-
-                // Fetch the browser ID from the debugging endpoint
-                const browserId = await this.getBrowserIdFromEndpoint();
-                console.log(chalk.green(`Browser ID: ${browserId}`));
-
-                this.browser = await puppeteer.connect({
-                    browserWSEndpoint: 'ws://127.0.0.1:9222/devtools/browser/' + browserId
-                });
-            } catch (error) {
-                console.error(chalk.red('Failed to initialize the browser:'), error);
+    
+            this.runCommand(command);
+    
+            // Wait for the new browser to initialize
+            browserId = await this.waitForBrowserId(endpointUrl, 10000); // 10-second timeout
+            if (!browserId) {
+                console.error(chalk.red('Failed to initialize the browser within the timeout.'));
+                return;
             }
         }
+    
+        console.log(chalk.green(`Browser ID: ${browserId}`));
+        try {
+            this.browser = await puppeteer.connect({
+                browserWSEndpoint: `ws://127.0.0.1:9222/devtools/browser/${browserId}`,
+            });
+        } catch (error) {
+            console.error(chalk.red('Failed to connect to the browser:'), error);
+        }
     }
-
+    
+    private getBrowserLaunchCommand(): string | null {
+        const os = process.platform;
+    
+        if (os === 'darwin') {
+            return `/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=$(mktemp -d -t 'chrome-remote_data_dir')`;
+        } else if (os === 'win32') {
+            return `start chrome --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir=$(mktemp -d -t 'chrome-remote_data_dir')`;
+        } else {
+            return null; // Unsupported OS
+        }
+    }
+    
+    private async checkForExistingBrowser(endpointUrl: string): Promise<string | null> {
+        try {
+            const response = await axios.get(endpointUrl);
+            return this.extractBrowserId(response.data.webSocketDebuggerUrl);
+        } catch {
+            return null; // Endpoint is not active
+        }
+    }
+    
+    private async waitForBrowserId(endpointUrl: string, timeout: number): Promise<string | null> {
+        const interval = 1000; // Check every second
+        const maxAttempts = timeout / interval;
+    
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const browserId = await this.checkForExistingBrowser(endpointUrl);
+            if (browserId) {
+                return browserId;
+            }
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+    
+        return null; // Timed out
+    }
+    
+    private extractBrowserId(wsEndpoint: string): string | null {
+        const match = wsEndpoint.match(/devtools\/browser\/([\w-]+)/);
+        return match && match[1] ? match[1] : null;
+    }
+    
     private runCommand(command: string) {
         const child = exec(command, (error, stdout, stderr) => {
             if (error) {
@@ -72,29 +112,11 @@ export default class BrowserService {
                 console.error(chalk.red(stderr));
             }
         });
-
+    
         child.stdout?.on('data', (data) => {
             console.log(chalk.blue(data.toString()));
         });
     }
-
-    private async getBrowserIdFromEndpoint(): Promise<string> {
-        try {
-            const response = await axios.get('http://127.0.0.1:9222/json/version');
-            const wsEndpoint = response.data.webSocketDebuggerUrl;
-            const match = wsEndpoint.match(/devtools\/browser\/([\w-]+)/);
-
-            if (match && match[1]) {
-                return match[1];
-            } else {
-                throw new Error('Browser ID not found in WebSocket URL.');
-            }
-        } catch (error: any) {
-            throw new Error(`Failed to fetch browser ID from endpoint: ${error.message}`);
-        }
-    }
-
-
 
     public async setCookie(cookie: Cookie) {
         await this.browser?.setCookie(cookie);
