@@ -13,3 +13,7 @@ export const personal_info = {
 }
 
 export const cover = `Write your cover letter here.`
+
+export const lever = {
+    location: '{"name":"New York, NY, USA","id":"f2b3b2d1-3d6e-4f3b-8b1f-4b6b4f3b2d1"}'', // This is required for adding your location to Lever. You can get this by selecting manually your location in Lever and then inspecting the #selected-input value.
+}
