@@ -163,6 +163,9 @@ export default class LiveController {
         await this.boardService?.uploadResume(this.job!, this.page!)
         this.spinner?.succeed(chalk.green("Resume uploaded."));
 
+        this.spinner?.start("Filling out personal information...");
+        await this.boardService?.fillPersonalInfo(this.page!);
+        this.spinner?.succeed(chalk.green("Personal information filled."));
 
         await this.handleCustomFields();
 
@@ -175,14 +178,6 @@ export default class LiveController {
         this.spinner?.start("Filling out cover letter...");
         await this.boardService?.fillCover(this.page!);
         this.spinner?.succeed(chalk.green("Cover letter filled."));
-
-        this.spinner?.start("Checking if resume was uploaded...");
-        await this.boardService?.isResumeUploaded(this.page!);
-        this.spinner?.succeed(chalk.green("Resume uploaded successfully."));
-
-        this.spinner?.start("Filling out personal information...");
-        await this.boardService?.fillPersonalInfo(this.page!);
-        this.spinner?.succeed(chalk.green("Personal information filled."));
     }
 
     private async navigateToJobPage() {

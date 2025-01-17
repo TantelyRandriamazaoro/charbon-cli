@@ -2,7 +2,7 @@ import Job, { LeverCustomFieldCard, NormalizedCustomField, ScrapedJobDetails } f
 import { inject, injectable } from "inversify";
 import { Ora } from "ora";
 import { ElementHandle, Page } from "puppeteer";
-import { cover, personal_info } from "@config/input";
+import { cover, lever, personal_info } from "@config/input";
 
 import TransformationService from "../core/transformation.service";
 
@@ -27,6 +27,7 @@ export default class LeverService {
             email: 'input[name="email"]',
             phone: 'input[name="phone"]',
             location: '[data-qa="location-input"]',
+            selectedLocation: '#selected-location',
             currentCompany: 'input[name="org"]',
             linkedin: 'input[name="urls[LinkedIn]"]',
             linkedinProfile: 'input[name="urls[LinkedIn Profile"]',
@@ -68,6 +69,19 @@ export default class LeverService {
     }
 
     async uploadResume(job: Job, page: Page) {
+        // Enable request interception
+        await page.setRequestInterception(true);
+
+        page.on('request', (request) => {
+            // Check if the request URL matches the API call you want to abort
+            if (request.url() === 'https://jobs.lever.co/parseResume') {
+                console.log(`Aborting request to: ${request.url()}`);
+                request.abort(); // Abort the request
+            } else {
+                request.continue(); // Allow other requests to continue
+            }
+        });
+
         const resumeInput = await page.$(this.selectors.resumeUpload) as ElementHandle<HTMLInputElement>;
         if (!resumeInput) {
             throw new Error('Resume upload input not found');
@@ -89,7 +103,8 @@ export default class LeverService {
             { selector: this.selectors.name, value: `${personal_info.first_name} ${personal_info.last_name}` },
             { selector: this.selectors.email, value: personal_info.email },
             { selector: this.selectors.phone, value: personal_info.phone },
-            // { selector: this.selectors.location, value: personal_info.location },
+            { selector: this.selectors.location, value: personal_info.location },
+            { selector: this.selectors.selectedLocation, value: lever.location },
             { selector: this.selectors.currentCompany, value: personal_info.current_company },
             { selector: this.selectors.linkedin, value: personal_info.linkedin },
             { selector: this.selectors.linkedinProfile, value: personal_info.linkedin },
