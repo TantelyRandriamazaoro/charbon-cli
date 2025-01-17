@@ -43,30 +43,27 @@ export default class SearchController {
                 starts_at = lastQuery.starts_at + 10;
                 page_number = Math.floor(starts_at / 10) + 1;
 
-                if (starts_at > 91) {
-                    console.log('Max pages reached.');
-                    return;
+                if (starts_at > 91 || page_number == 10) {
+                    throw new Error('Max pages reached');
                 }
             }
 
             if (!options.resume) {
                 const resumes = await this.filesystemService.listResume();
                 if (!resumes) {
-                    console.log('No resumes found');
-                    return;
+                    throw new Error('No resumes found');
                 }
                 const selectedResume = await this.inquirerService.askForResume(resumes);
                 options.resume = selectedResume;
             }
 
             const searchResults = await this.searchService.query(query, { ...options, starts_at });
-            const transformedResults = await this.transformationService.transformSearchResults({ ...searchResults, resume: options.resume });
 
-            if (transformedResults.length === 0) {
-                console.log('No results found');
-                return;
+            if (searchResults.items.length === 0) {
+                throw new Error('No results found');
             }
 
+            const transformedResults = await this.transformationService.transformSearchResults({ ...searchResults, resume: options.resume });
             const { success, duplicates } = await this.databaseService.storeDiscoveredJobs(transformedResults);
 
             // Log a user friendly list of results using chalk
@@ -88,22 +85,19 @@ export default class SearchController {
             console.log(`------------------------------------`);
             console.log(` `);
 
-        } catch (err) {
-
-            console.error(err);
-        } finally {
-            if (page_number === 10) {
-                console.log('Max pages reached.');
-                return;
-            }
-
-            if (starts_at > 91) {
-                console.log('Consider refining your search with more specific keywords');
-                return;
-            }
             const morePages = await this.inquirerService.askForMorePages();
             if (morePages) {
                 await this.handle(query, options);
+            }
+        } catch (err: any) {
+            if (err?.message === 'Max pages reached') {
+                console.log(chalk.yellow(`Max pages reached for query ${query}`));
+            } else if (err?.message === 'No resumes found') {
+                console.log(chalk.red(`No resumes found`));
+            } else if (err?.message === 'No results found') {
+                console.log(chalk.red(`No results found for query ${query}`));
+            } else {
+                console.log(chalk.red(err.message));
             }
         }
     }

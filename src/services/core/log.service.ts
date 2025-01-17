@@ -43,16 +43,13 @@ export default class LogService {
         if (details?.salary)
             append({ label: "Salary", message: details.salary }, chalk.cyan);
 
-        if (details?.isAiFriendly !== undefined)
-            append({ label: "AI Friendly", message: String(details.isAiFriendly) }, chalk.cyan);
-
         if (details?.technical_skills)
             append(
                 { label: "Technical Skills", message: details.technical_skills.join(" | ") },
                 chalk.cyan
             );
 
-        if (details?.catch) append({ label: "Catch", message: details.catch }, chalk.red);
+        if (job.resume) append({ label: "Using resume:", message: job.resume }, chalk.yellow);
 
         console.log(
             boxen(getOutput(), {

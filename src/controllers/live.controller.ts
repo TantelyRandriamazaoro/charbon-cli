@@ -19,7 +19,8 @@ import LogService from "@/services/core/log.service";
 enum Actions {
     PROCEED = "PROCEED",
     SKIP = "SKIP",
-    DUPLICATE = "DUPLICATE"
+    DUPLICATE = "DUPLICATE",
+    SWAP = "SWAP",
 }
 
 @injectable()
@@ -169,8 +170,9 @@ export default class LiveController {
                 message: "Do you want to proceed with the application?",
                 choices: [
                     { name: "✅ Yes, proceed", value: Actions.PROCEED },
-                    { name: "❌ No, skip this job", value: Actions.SKIP },
-                    { name: "❌ No, I have already applied", value: Actions.DUPLICATE },
+                    { name: "🔄 Yes, but swap resume", value: Actions.SWAP },
+                    { name: "No, skip this job", value: Actions.SKIP },
+                    { name: "No, I have already applied", value: Actions.DUPLICATE },
                 ],
                 default: Actions.PROCEED,
             },
@@ -180,6 +182,16 @@ export default class LiveController {
             throw new Error("Job skipped");
         } else if (action === Actions.DUPLICATE) {
             throw new Error("Job already applied");
+        }
+
+        if (action === Actions.SWAP) {
+            const resumes = await this.fileSystemService.listResume();
+            if (!resumes) {
+                throw new Error("No resumes found");
+            }
+
+            const selectedResume = await this.inquirerService.askForResume(resumes);
+            this.job!.resume = selectedResume;
         }
 
         await this.navigateToApplicationPage();
