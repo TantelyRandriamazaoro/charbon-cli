@@ -42,11 +42,12 @@ program
 program
   .command("scrape")
   .description("Scrape job applications")
-  .action(() => {
+  .option("-l, --limit <limit>", "Limit the number of jobs to scrape")
+  .action((options) => {
     console.log("Scraping job applications");
     const scrapeController = container.get(ScrapeController);
     scrapeController.init().then(() =>
-      scrapeController.handle()
+      scrapeController.handle(options)
     );
   });
 

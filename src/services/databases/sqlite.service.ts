@@ -47,10 +47,12 @@ export default class SQLiteService implements IDatabaseService {
 
             sql += `AND board = ? 
                     AND country = ?
+                    AND location_type = ?
                     ORDER BY timestamp DESC 
                     LIMIT 1`;
             params.push(options.board);
             params.push(options.country);
+            params.push(options.location_type);
 
             const search = await this.database?.get(sql, params);
             return search as SearchEntry;
@@ -62,7 +64,7 @@ export default class SQLiteService implements IDatabaseService {
 
     async storeSearch(data: SearchEntry): Promise<number | undefined> {
         try {
-            const response = await this.database?.run(`INSERT INTO search (query, keywords, starts_at, board, country) VALUES (?, ?, ?, ?, ?)`, [data.query, data.keywords, data.starts_at, data.board, data.country]);
+            const response = await this.database?.run(`INSERT INTO search (query, keywords, starts_at, board, country, location_type) VALUES (?, ?, ?, ?, ?, ?)`, [data.query?.toLowerCase(), data.keywords?.toLowerCase(), data.starts_at, data.board, data.country, data.location_type]);
             return response?.lastID;
         } catch (err) {
             console.error(err);
@@ -103,9 +105,9 @@ export default class SQLiteService implements IDatabaseService {
         }
     }
 
-    async getDiscoveredJobs() {
+    async getDiscoveredJobs(limit: number = 10): Promise<Job[] | undefined> {
         try {
-            const jobs = await this.database?.all(`SELECT id, title, link, board FROM job WHERE status = 'Discovered' LIMIT 10`);
+            const jobs = await this.database?.all(`SELECT id, title, link, board, status FROM job WHERE status = 'Discovered' LIMIT ?`, [limit]);
             return jobs as Job[] || [];
         } catch (err) {
             console.error(err);
@@ -114,11 +116,11 @@ export default class SQLiteService implements IDatabaseService {
 
     async getScrapedJobs() {
         try {
-            const jobs = await this.database?.all(`SELECT id, title, link, custom_fields FROM job WHERE status = 'Scraped' LIMIT 10`);
+            const jobs = await this.database?.all(`SELECT id, title, link, details, status FROM job WHERE status = 'Scraped' LIMIT 10`);
             return jobs?.map((job) => {
                 return {
                     ...job,
-                    custom_fields: JSON.parse(job.custom_fields) || [],
+                    details: JSON.parse(job.details) || [],
                 };
             }) as Job[] || [];
         } catch (err) {
@@ -163,12 +165,12 @@ export default class SQLiteService implements IDatabaseService {
         return [];
     }
 
-    async updateScrapedJobs(data: ScrapedJobDetails<NormalizedCustomField>[]) {
+    async updateScrapedJobs(data: ScrapedJobDetails[]) {
         try {
             // update the status, details, description, and custom fields
-            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Scraped', description = ?, details = ?, custom_fields = ? WHERE id = ?`);
+            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Scraped', description = ?, details = ? WHERE id = ?`);
             data.forEach((job) => {
-                stmt?.run([job.description, JSON.stringify(job.details), JSON.stringify(job.custom_fields), job.job_id]);
+                stmt?.run([job.description, JSON.stringify(job.details), job.job_id]);
             });
 
             return;

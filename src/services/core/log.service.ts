@@ -49,6 +49,9 @@ export default class LogService {
                 chalk.cyan
             );
 
+        if (details?.language)
+            append({ label: "Language", message: details.language }, chalk.cyan);
+
         if (job.resume) append({ label: "Using resume", message: job.resume }, chalk.yellow);
 
         console.log(

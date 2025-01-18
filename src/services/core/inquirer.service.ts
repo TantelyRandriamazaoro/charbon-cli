@@ -3,6 +3,7 @@ import Status from "@/models/Status";
 import inquirer from "inquirer";
 import { inject, injectable } from "inversify";
 import FileSystemService from "./filesystem.service";
+import { LocationType } from "@/models/Search";
 
 @injectable()
 export default class InquirerService {
@@ -122,24 +123,40 @@ export default class InquirerService {
 
     async askForCountry() {
         const countries = await this.filesystemService.getCountries();
-        
+
         const answers = await inquirer.prompt([
             {
                 type: 'search',
                 name: 'country',
-                message: 'Enter the country code to search for:',
+                message: 'Where do you want to search?',
+                default: { code: 'global', name: 'Global' },
                 source: async (input, { signal }) => {
                     if (!input) {
                         return [];
                     }
-                    return countries!.map((country) => ({
-                        value: country.code,
+                    const filtered = countries!.map((country) => ({
+                        value: country,
                         name: country.name
                     })).filter((country) => country.name.toLowerCase().includes(input.toLowerCase()));
+
+                    return [...filtered, { value: 'global', name: 'Global' }];
                 }
             },
         ]);
 
-        return answers.country as string;
+        return answers.country as { code: string, name: string };
+    }
+
+    async askForLocationType() {
+        const answers = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'locationType',
+                message: 'Select the location type:',
+                choices: ['On-site', 'Hybrid', 'Remote'],
+            },
+        ]);
+
+        return answers.locationType.toLowerCase() as LocationType;
     }
 }

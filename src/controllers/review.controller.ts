@@ -20,7 +20,7 @@ export default class ReviewController {
 
     async handle() {
         try {
-            const jobs = await this.databaseService.getPreparedJobs();
+            const jobs = await this.databaseService.getScrapedJobs();
 
             if (!jobs || jobs.length === 0) {
                 console.log('No jobs to review');

@@ -28,7 +28,7 @@ export default class SearchService {
             cx: this.cx,
             q: `${query} ${fullQuery}`,
             start: options.starts_at || 1,
-            gl: options.country || 'us',
+            gl: options.country === 'global' ? undefined : options.country,
         });
 
         const search_id = await this.storeSearch(query, options);
@@ -40,8 +40,11 @@ export default class SearchService {
         }
     }
 
-    private buildQuery(options: { keywords: string; board: string; }) {
+    private buildQuery(options: SearchOptions): string {
         const keywords = options.keywords ? options.keywords.split(',').map((keyword) => `"${keyword}"`).join(' ') : '';
+        const country = options.country === 'global' ? '' : `"${options.country}"`;
+        const location_type = `"${options.location_type}"`;
+
         let board = 'site:';
 
         switch (options.board) {
@@ -58,16 +61,15 @@ export default class SearchService {
                 board += Boards.LEVER
         }
 
-        return `${keywords} ${board}`;
+        return `${keywords} ${location_type} ${country} ${board}`;
     }
 
     async storeSearch(query: string, options: SearchOptions) {
         const searchEntry: SearchEntry = {
+            ...options,
             query: query.toLowerCase(),
-            keywords: options.keywords,
-            starts_at: options.starts_at || 1,
-            country: options.country || 'us',
-            board: options.board
+            country: options.country || 'global',
+            country_name: options.country_name
         };
 
         return await this.databaseService.storeSearch(searchEntry);

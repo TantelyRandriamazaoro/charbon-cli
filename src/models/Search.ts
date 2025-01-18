@@ -8,21 +8,21 @@ export type SearchResults = {
     items: customsearch_v1.Schema$Result[];
 }
 
-export type SearchEntry = {
-    id?: number;
-    query: string;
-    keywords: string;
-    starts_at: number;
-    board: Boards;
-    country: string;
-    timestamp?: string;
-}
 
 export type SearchOptions = {
     query: string;
     keywords: string;
     board: Boards;
-    starts_at?: number;
+    starts_at: number;
     resume?: string;
-    country?: string;
+    country: string;
+    country_name?: string;
+    location_type: LocationType;
 }
+
+export type SearchEntry = SearchOptions &{
+    id?: number;
+    timestamp?: string;
+}
+
+export type LocationType = 'remote' | 'on-site' | 'hybrid';

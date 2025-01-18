@@ -9,14 +9,13 @@ import inquirer from "inquirer";
 
 @injectable()
 export default class LeverService {
-    private data: ScrapedJobDetails<LeverCustomFieldCard>;
+    private data: ScrapedJobDetails;
     private selectors: { [key: string]: string };
 
 
     constructor() {
         this.data = {
             description: '',
-            custom_fields: [],
             board: 'lever'
         };
         this.selectors = {

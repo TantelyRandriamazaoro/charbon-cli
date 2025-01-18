@@ -11,6 +11,11 @@ import boxen from "boxen";
 
 @injectable()
 export default class SearchController {
+    private starts_at = 1;
+    private page_number = 1;
+    private duplicates = 0;
+    private total = 0;
+
     constructor(
         @inject(InquirerService) private inquirerService: InquirerService,
         @inject(FileSystemService) private filesystemService: FileSystemService,
@@ -23,9 +28,7 @@ export default class SearchController {
         await this.databaseService.init();
     }
 
-    async handle(query: string, options: SearchOptions) {
-        let starts_at = 1;
-        let page_number = 1;
+    async handle(query: string, options: SearchOptions, isRecursive = false) {
         try {
             if (!options.board) {
                 const selectedBoard = await this.inquirerService.askForJobBoard();
@@ -34,18 +37,29 @@ export default class SearchController {
 
             if (!options.country) {
                 const selectedCountry = await this.inquirerService.askForCountry();
-                options.country = selectedCountry;
+                options.country = selectedCountry.code;
+                options.country_name = selectedCountry.name;
             }
 
-            const lastQuery = await this.databaseService.getLastSearch(query.toLocaleLowerCase(), options);
+            if (!options.location_type) {
+                const selectedLocationType = await this.inquirerService.askForLocationType();
+                options.location_type = selectedLocationType;
+            }
 
-            if (lastQuery) {
-                starts_at = lastQuery.starts_at + 10;
-                page_number = Math.floor(starts_at / 10) + 1;
+            if (isRecursive) {
+                this.starts_at += 10;
+                this.page_number = Math.floor(this.starts_at / 10) + 1;
+            } else {
+                const lastQuery = await this.databaseService.getLastSearch(query.toLocaleLowerCase(), options);
 
-                if (starts_at > 91 || page_number == 10) {
-                    throw new Error('Max pages reached');
+                if (lastQuery) {
+                    this.starts_at = lastQuery.starts_at + 10;
+                    this.page_number = Math.floor(this.starts_at / 10) + 1;
                 }
+            }
+
+            if (this.starts_at > 91 || this.page_number == 11) {
+                throw new Error('Max pages reached');
             }
 
             if (!options.resume) {
@@ -57,7 +71,7 @@ export default class SearchController {
                 options.resume = selectedResume;
             }
 
-            const searchResults = await this.searchService.query(query, { ...options, starts_at });
+            const searchResults = await this.searchService.query(query, { ...options, starts_at: this.starts_at });
 
             if (searchResults.items.length === 0) {
                 throw new Error('No results found');
@@ -76,28 +90,30 @@ export default class SearchController {
                             margin: 0.5,
 
                             borderStyle: 'round',
-                            borderColor: 'cyan'
+                            borderColor: 'cyan',
                         })
                 );
             })
 
-            console.log(chalk.yellow(`Page ${page_number} processed`) + ` | Found ${success.length} results for ${query}` + (duplicates > 0 ? ` | ${duplicates} duplicate(s)` : ''));
-            console.log(`------------------------------------`);
-            console.log(` `);
+            this.duplicates += duplicates;
+            this.total += success.length;
 
-            const morePages = await this.inquirerService.askForMorePages();
-            if (morePages) {
-                await this.handle(query, options);
-            }
+            await this.handle(query, options, true);
         } catch (err: any) {
             if (err?.message === 'Max pages reached') {
-                console.log(chalk.yellow(`Max pages reached for query ${query}`));
+                return;
             } else if (err?.message === 'No resumes found') {
                 console.log(chalk.red(`No resumes found`));
-            } else if (err?.message === 'No results found') {
+            } else if (err?.message === 'No results found' && this.total === 0) {
                 console.log(chalk.red(`No results found for query ${query}`));
+            } else if (err?.message === 'No results found' && this.total > 0) {
+                return;
             } else {
                 console.log(chalk.red(err.message));
+            }
+        } finally {
+            if (!isRecursive) {
+                console.log(chalk.green(`Total jobs found: ${this.total}`) + (this.duplicates > 0 ? ' | ' + chalk.yellow(`Duplicates: ${this.duplicates}`) : ''));
             }
         }
     }

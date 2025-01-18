@@ -24,13 +24,13 @@ export type JobDetails = {
     experience: string;
     salary: string;
     summary: string;
+    language: string;
 }
 
-export interface ScrapedJobDetails<T> {
+export interface ScrapedJobDetails {
     job_id?: number;
     description: string;
     details?: JobDetails;
-    custom_fields: Array<T>;
     board: Boards;
 }
 

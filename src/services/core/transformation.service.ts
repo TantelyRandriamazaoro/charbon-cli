@@ -129,15 +129,4 @@ export default class TransformationService {
 
         }
     }
-
-    transformScrapedJobs(data: ScrapedJobDetails<RawCustomField>[]): ScrapedJobDetails<NormalizedCustomField>[] {
-        return data.map((job) => {
-            return {
-                ...job,
-                custom_fields: this.normalizeCustomFields(job.custom_fields, job.board),
-            };
-        });
-    }
-
-    
 }

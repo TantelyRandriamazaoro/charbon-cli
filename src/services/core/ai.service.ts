@@ -12,6 +12,7 @@ const JobDetails = z.object({
     experience: z.string(),
     salary: z.string(),
     summary: z.string(),
+    language: z.string()
 });
 
 const CustomAnswers = z.object({
@@ -41,7 +42,7 @@ export default class AiService {
                     {
                         role: "system",
                         content:
-                            "Extract structured data from the job description based on this schema. Location type can be either 'On-site' | 'Hybrid' | 'Remote'. Job type can be either 'Full-time' | 'Part-time' | 'Contract' | 'Temporary'. Experience can be either 'Entry-level' | 'Mid-level' | 'Senior-level'. Location must be in the format of 'City, State, Country'.",
+                            "Extract structured data from the job description based on this schema. Location type can be either 'On-site' | 'Hybrid' | 'Remote'. Job type can be either 'Full-time' | 'Part-time' | 'Contract' | 'Temporary'. Experience can be either 'Entry-level' | 'Mid-level' | 'Senior-level'. Location must be in the format of 'City, State, Country'. Language is the language the job description is written in.",
                     },
                     { role: "user", content: description },
                 ],
