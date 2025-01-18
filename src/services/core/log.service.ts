@@ -31,8 +31,8 @@ export default class LogService {
 
         if (details?.location) append({ label: "Location", message: details.location }, chalk.cyan);
 
-        if (details?.remote !== undefined)
-            append({ label: "Remote", message: String(details.remote) }, chalk.cyan);
+        if (details?.location_type !== undefined)
+            append({ label: "Location type", message: String(details.location_type) }, chalk.cyan);
 
         if (details?.job_type)
             append({ label: "Job type", message: details.job_type }, chalk.cyan);
@@ -49,7 +49,7 @@ export default class LogService {
                 chalk.cyan
             );
 
-        if (job.resume) append({ label: "Using resume:", message: job.resume }, chalk.yellow);
+        if (job.resume) append({ label: "Using resume", message: job.resume }, chalk.yellow);
 
         console.log(
             boxen(getOutput(), {

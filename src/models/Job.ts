@@ -18,16 +18,12 @@ export type Job = {
 
 export type JobDetails = {
     technical_skills: string[];
-    soft_skills: string[];
-    isAiFriendly: boolean;
     location: string;
-    remote: boolean;
+    location_type: string;
     job_type: string;
     experience: string;
     salary: string;
     summary: string;
-    catch: string;
-    context: string;
 }
 
 export interface ScrapedJobDetails<T> {
