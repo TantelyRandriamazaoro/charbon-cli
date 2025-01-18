@@ -5,7 +5,7 @@ import LeverService from "@/services/boards/lever.service";
 import AiService from "@/services/core/ai.service";
 import BrowserService from "@/services/core/browser.service";
 import FileSystemService from "@/services/core/filesystem.service";
-import InquirerService from "@/services/core/inquirer.service";
+import InquirerService, { Actions } from "@/services/core/inquirer.service";
 import TransformationService from "@/services/core/transformation.service";
 import buildMultilineOutput from "@/utils/buildMultilineOutput";
 import boxen from "boxen";
@@ -15,13 +15,6 @@ import { inject, injectable } from "inversify";
 import inquirer from "inquirer";
 import { CookieSameSite, Page } from "puppeteer";
 import LogService from "@/services/core/log.service";
-
-enum Actions {
-    PROCEED = "PROCEED",
-    SKIP = "SKIP",
-    DUPLICATE = "DUPLICATE",
-    SWAP = "SWAP",
-}
 
 @injectable()
 export default class LiveController {
@@ -164,20 +157,7 @@ export default class LiveController {
         await this.extractJobDetails();
         this.logService.logJobDetails(this.job!);
 
-        const { action } = await inquirer.prompt([
-            {
-                type: "list",
-                name: "action",
-                message: "Do you want to proceed with the application?",
-                choices: [
-                    { name: "✅ Yes, proceed", value: Actions.PROCEED },
-                    { name: "🔄 Yes, but swap resume", value: Actions.SWAP },
-                    { name: "No, skip this job", value: Actions.SKIP },
-                    { name: "No, I have already applied", value: Actions.DUPLICATE },
-                ],
-                default: Actions.PROCEED,
-            },
-        ]);
+        const action = await this.inquirerService.askForAction();
 
         if (action === Actions.SKIP) {
             throw new Error("Job skipped");

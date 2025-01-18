@@ -116,7 +116,7 @@ export default class SQLiteService implements IDatabaseService {
 
     async getScrapedJobs() {
         try {
-            const jobs = await this.database?.all(`SELECT id, title, link, details, status FROM job WHERE status = 'Scraped' LIMIT 10`);
+            const jobs = await this.database?.all(`SELECT id, title, link, details, resume, status FROM job WHERE status = 'Scraped' LIMIT 10`);
             return jobs?.map((job) => {
                 return {
                     ...job,
@@ -215,14 +215,15 @@ export default class SQLiteService implements IDatabaseService {
 
     async updateJob(data: Job) {
         try {
-            const stmt = await this.database?.prepare(`UPDATE job SET description = ?, details = ?, custom_fields = ?, custom_fields_answers = ?, status = ? WHERE id = ?`);
+            const stmt = await this.database?.prepare(`UPDATE job SET description = ?, details = ?, custom_fields = ?, custom_fields_answers = ?, resume = ?, status = ? WHERE id = ?`);
             stmt?.run([
                 data.description,
                 JSON.stringify(data.details || {}),
                 JSON.stringify(data.custom_fields || []),
                 JSON.stringify(data.custom_fields_answers || []),
+                data.resume,
                 data.status,
-                data.id
+                data.id,
             ]);
         } catch (err) {
             console.error(err);

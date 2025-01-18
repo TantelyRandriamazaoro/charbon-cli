@@ -5,6 +5,13 @@ import { inject, injectable } from "inversify";
 import FileSystemService from "./filesystem.service";
 import { LocationType } from "@/models/Search";
 
+export enum Actions {
+    PROCEED = "PROCEED",
+    SKIP = "SKIP",
+    DUPLICATE = "DUPLICATE",
+    SWAP = "SWAP",
+}
+
 @injectable()
 export default class InquirerService {
 
@@ -63,6 +70,25 @@ export default class InquirerService {
         ]);
 
         return answers.morePages as boolean;
+    }
+
+    async askForAction() {
+        const { action } = await inquirer.prompt([
+            {
+                type: "list",
+                name: "action",
+                message: "Are you interested in applying for this job?",
+                choices: [
+                    { name: "✅ Yes", value: Actions.PROCEED },
+                    { name: "🔄 Yes, but swap resume", value: Actions.SWAP },
+                    { name: "No, skip this job", value: Actions.SKIP },
+                    { name: "No, I have already applied", value: Actions.DUPLICATE },
+                ],
+                default: Actions.PROCEED,
+            },
+        ]);
+
+        return action as Actions;
     }
 
     async askForStatus(job: Job): Promise<Status> {

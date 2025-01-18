@@ -66,7 +66,7 @@ export default class ScrapeController {
 
                     const title = await this.page?.title();
 
-                    if (title!.includes('404')) {
+                    if (title.includes('404')) {
                         throw new Error("Not Found");
                     }
 
