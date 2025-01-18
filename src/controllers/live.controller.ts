@@ -235,7 +235,7 @@ export default class LiveController {
 
     private async navigateToApplicationPage() {
         this.spinner?.start("Navigating to application page...");
-        await this.page!.goto(`${this.job!.link}/apply`, { waitUntil: "domcontentloaded" });
+        await this.page!.goto(`${this.job!.link}/apply`, { waitUntil: "networkidle2" });
         this.spinner?.succeed(chalk.green("Application page loaded."));
     }
 
