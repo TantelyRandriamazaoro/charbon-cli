@@ -5,6 +5,7 @@ import Job, { NormalizedCustomField, ScrapedJobDetails } from "@/models/Job";
 import { injectable } from "inversify";
 import IDatabaseService from "@/models/IDatabaseService";
 import { SearchEntry, SearchOptions, SearchResults } from "@/models/Search";
+import Status from "@/models/Status";
 
 @injectable()
 export default class SQLiteService implements IDatabaseService {
@@ -71,7 +72,58 @@ export default class SQLiteService implements IDatabaseService {
         }
     }
 
-    async storeDiscoveredJobs(data: Job[]) {
+    async getJob(options: { status: Status, excludeFields?: (keyof Job)[] }) {
+        try {
+            let sql = `SELECT * FROM job WHERE status = ? LIMIT 1`;
+            const job = await this.database?.get(sql, [options.status]);
+
+            return {
+                ...job,
+                details: JSON.parse(job.details) || {},
+                custom_fields: JSON.parse(job.custom_fields) || [],
+                custom_fields_answers: JSON.parse(job.custom_fields_answers) || [],
+            } as Job;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async getJobs(options: { status: Status, limit: number }) {
+        try {
+            let sql = `SELECT * FROM job WHERE status = ? LIMIT ?`;
+            const jobs = await this.database?.all(sql, [options.status, options.limit]);
+
+            return jobs!.map((job) => {
+                return {
+                    ...job,
+                    details: JSON.parse(job.details) || {},
+                    custom_fields: JSON.parse(job.custom_fields) || [],
+                    custom_fields_answers: JSON.parse(job.custom_fields_answers) || [],
+                };
+            }) as Job[];
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async updateJob(data: Job) {
+        try {
+            const stmt = await this.database?.prepare(`UPDATE job SET description = ?, details = ?, custom_fields = ?, custom_fields_answers = ?, resume = ?, status = ? WHERE id = ?`);
+            stmt?.run([
+                data.description,
+                JSON.stringify(data.details || {}),
+                JSON.stringify(data.custom_fields || []),
+                JSON.stringify(data.custom_fields_answers || []),
+                data.resume,
+                data.status,
+                data.id,
+            ]);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async storeJobs(data: Job[]) {
         const stmt = await this.database?.prepare(`INSERT INTO job (search_id, title, link, board, resume) VALUES (?, ?, ?, ?, ?)`);
 
         let success: Job[] = [];
@@ -96,137 +148,4 @@ export default class SQLiteService implements IDatabaseService {
         }
     }
 
-    async getDiscoveredJob(): Promise<Job | undefined> {
-        try {
-            const job = await this.database?.get(`SELECT id, title, link, board, resume, status FROM job WHERE status = 'Discovered' LIMIT 1`);
-            return job as Job;
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async getDiscoveredJobs(limit: number = 10): Promise<Job[] | undefined> {
-        try {
-            const jobs = await this.database?.all(`SELECT id, title, link, board, status FROM job WHERE status = 'Discovered' LIMIT ?`, [limit]);
-            return jobs as Job[] || [];
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async getScrapedJobs() {
-        try {
-            const jobs = await this.database?.all(`SELECT id, title, link, details, resume, status FROM job WHERE status = 'Scraped' LIMIT 10`);
-            return jobs?.map((job) => {
-                return {
-                    ...job,
-                    details: JSON.parse(job.details) || [],
-                };
-            }) as Job[] || [];
-        } catch (err) {
-            console.error(err);
-        }
-
-        return [];
-    }
-
-    async getPreparedJobs() {
-        try {
-            const jobs = await this.database?.all(`SELECT id, title, link, details, custom_fields, custom_fields_answers FROM job WHERE status = 'Prepared' LIMIT 10`);
-            return jobs?.map((job) => {
-                return {
-                    ...job,
-                    details: JSON.parse(job.details) || [],
-                    custom_fields: JSON.parse(job.custom_fields) || [],
-                    custom_fields_answers: JSON.parse(job.custom_fields_answers) || [],
-                };
-            }) as Job[] || [];
-        } catch (err) {
-            console.error(err);
-        }
-
-        return [];
-    }
-
-    async getReviewedJobs() {
-        try {
-            const jobs = await this.database?.all(`SELECT id, title, link, custom_fields, board, resume, custom_fields_answers FROM job WHERE status = 'Reviewed' LIMIT 1`);
-            return jobs?.map((job) => {
-                return {
-                    ...job,
-                    custom_fields: JSON.parse(job.custom_fields) || [],
-                    custom_fields_answers: JSON.parse(job.custom_fields_answers) || [],
-                };
-            }) as Job[] || [];
-        } catch (err) {
-            console.error(err);
-        }
-
-        return [];
-    }
-
-    async updateScrapedJobs(data: ScrapedJobDetails[]) {
-        try {
-            // update the status, details, description, and custom fields
-            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Scraped', description = ?, details = ? WHERE id = ?`);
-            data.forEach((job) => {
-                stmt?.run([job.description, JSON.stringify(job.details), job.job_id]);
-            });
-
-            return;
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async updateFailedJobs(data: Job[]) {
-        try {
-            // update the status
-            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Failed' WHERE id = ?`);
-            data.forEach((job) => {
-                stmt?.run([job.id]);
-            });
-
-            return;
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async updatePreparedJobs(data: Job[]) {
-        try {
-            const stmt = await this.database?.prepare(`UPDATE job SET status = 'Prepared', custom_fields_answers = ? WHERE id = ?`);
-            data.forEach((job) => {
-                stmt?.run([JSON.stringify(job.custom_fields_answers || []), job.id]);
-            });
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async updateJobStatus(data: Job, status: string) {
-        try {
-            const stmt = await this.database?.prepare(`UPDATE job SET status = ? WHERE id = ?`);
-            stmt?.run([status, data.id]);
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async updateJob(data: Job) {
-        try {
-            const stmt = await this.database?.prepare(`UPDATE job SET description = ?, details = ?, custom_fields = ?, custom_fields_answers = ?, resume = ?, status = ? WHERE id = ?`);
-            stmt?.run([
-                data.description,
-                JSON.stringify(data.details || {}),
-                JSON.stringify(data.custom_fields || []),
-                JSON.stringify(data.custom_fields_answers || []),
-                data.resume,
-                data.status,
-                data.id,
-            ]);
-        } catch (err) {
-            console.error(err);
-        }
-    }
 }
