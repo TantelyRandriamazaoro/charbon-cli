@@ -1,16 +1,13 @@
 import Job, { LeverCustomFieldCard, NormalizedCustomField, ScrapedJobDetails } from "@/models/Job";
 import { inject, injectable } from "inversify";
-import { Ora } from "ora";
 import { ElementHandle, Page } from "puppeteer";
 import { cover, lever, personal_info } from "@config/input";
-
-import TransformationService from "../core/transformation.service";
-import inquirer from "inquirer";
 
 @injectable()
 export default class LeverService {
     private data: ScrapedJobDetails;
     private selectors: { [key: string]: string };
+    private page: Page | null = null;
 
 
     constructor() {
@@ -39,17 +36,21 @@ export default class LeverService {
         };
     }
 
-    async scrapeJobDescription(page: Page): Promise<string> {
-        await page.waitForSelector(this.selectors.description);
-        return await page.evaluate((selectors: typeof this.selectors) => {
+    async setPage(page: Page) {
+        this.page = page;
+    }
+
+    async scrapeJobDescription(): Promise<string> {
+        await this.page!.waitForSelector(this.selectors.description);
+        return await this.page!.evaluate((selectors: typeof this.selectors) => {
             const descriptionElement = document.querySelector(selectors.description);
             return descriptionElement ? descriptionElement.textContent || '' : '';
         }, this.selectors);
     }
 
-    async scrapeCustomFields(page: Page): Promise<LeverCustomFieldCard[]> {
+    async scrapeCustomFields(): Promise<LeverCustomFieldCard[]> {
         // Extract custom fields
-        return await page.evaluate((selector) => {
+        return await this.page!.evaluate((selector) => {
             const customFields: Array<{ name: string; fields: any }> = [];
             const customFieldsElements = document.querySelectorAll(selector);
             customFieldsElements.forEach((customFieldElement) => {
@@ -68,11 +69,11 @@ export default class LeverService {
         return regex.test(base);
     }
 
-    async uploadResume(job: Job, page: Page) {
+    async uploadResume(job: Job) {
         // Enable request interception
-        await page.setRequestInterception(true);
+        await this.page!.setRequestInterception(true);
 
-        page.on('request', (request) => {
+        this.page!.on('request', (request) => {
             // Check if the request URL matches the API call you want to abort
             if (request.url() === 'https://jobs.lever.co/parseResume') {
                 console.log(`Aborting request to: ${request.url()}`);
@@ -82,7 +83,7 @@ export default class LeverService {
             }
         });
 
-        const resumeInput = await page.$(this.selectors.resumeUpload) as ElementHandle<HTMLInputElement>;
+        const resumeInput = await this.page!.$(this.selectors.resumeUpload) as ElementHandle<HTMLInputElement>;
         if (!resumeInput) {
             throw new Error('Resume upload input not found');
         }
@@ -90,15 +91,11 @@ export default class LeverService {
         await resumeInput.uploadFile(`./resumes/${job.resume}`);
     }
 
-    async isResumeUploaded(page: Page) {
-        await page.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
+    async isResumeUploaded() {
+        await this.page!.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
     }
 
-    async apply(job: Job, page: Page) {
-
-    }
-
-    async fillPersonalInfo(page: Page) {
+    async fillPersonalInfo() {
         const fields = [
             { selector: this.selectors.name, value: `${personal_info.first_name} ${personal_info.last_name}` },
             { selector: this.selectors.email, value: personal_info.email },
@@ -114,7 +111,7 @@ export default class LeverService {
         // Wait for a moment to let Lever auto-fill the fields
         for (const field of fields) {
             if (field.selector && field.value) {
-                await page.evaluate((selector, value) => {
+                await this.page!.evaluate((selector, value) => {
                     const input = document.querySelector(selector) as HTMLInputElement;
                     if (input) {
                         input.value = value;
@@ -124,17 +121,17 @@ export default class LeverService {
         }
     }
 
-    async fillCover(page: Page) {
-        const additionalInfo = await page.$(this.selectors.additionalInfo);
+    async fillCover() {
+        const additionalInfo = await this.page!.$(this.selectors.additionalInfo);
         await additionalInfo?.type(cover);
     }
 
-    async fillCustomField(page: Page, question: NormalizedCustomField, answer: string | string[]) {
+    async fillCustomField(question: NormalizedCustomField, answer: string | string[]) {
         if (question.type === 'checkbox') {
             const values = Array.isArray(answer) ? answer : [answer];
 
             for (const value of values) {
-                const input = await page.$(`[name="${question.name}"][value="${value}"]`);
+                const input = await this.page!.$(`[name="${question.name}"][value="${value}"]`);
                 if (!input) {
                     throw new Error(`Could not find input for custom field: ${question.name}`);
                 }
@@ -143,21 +140,21 @@ export default class LeverService {
             }
 
         } else if (question.type === 'radio' && typeof answer === 'string') {
-            const input = await page.$(`[name="${question.name}"][value="${answer}"]`);
+            const input = await this.page!.$(`[name="${question.name}"][value="${answer}"]`);
             if (!input) {
                 throw new Error(`Could not find input for custom field: ${question.name}`);
             }
 
             await input.click();
         } else if (question.type === 'select' && typeof answer === 'string') {
-            const select = await page.$(`[name="${question.name}"]`);
+            const select = await this.page!.$(`[name="${question.name}"]`);
             if (!select) {
                 throw new Error(`Could not find select for custom field: ${question.name}`);
             }
 
             await select.select(answer);
         } else if ((question.type === 'text' || question.type === 'textarea') && typeof answer === 'string') {
-            const input = await page.$(`[name="${question.name}"]`);
+            const input = await this.page!.$(`[name="${question.name}"]`);
             if (!input) {
                 throw new Error(`Could not find input for custom field: ${question.name}`);
             }
@@ -172,7 +169,7 @@ export default class LeverService {
         }
     }
 
-    async fillCustomFields(job: Job, page: Page) {
+    async fillCustomFields(job: Job) {
         // Fill in the resume
         if (job.custom_fields && job.custom_fields.length > 0) {
             // Fill in the custom fields
@@ -180,23 +177,27 @@ export default class LeverService {
                 const { answer } = job.custom_fields_answers?.find((a) => a.key === question.name) || {};
 
                 if (answer) {
-                    await this.fillCustomField(page, question, answer);
+                    await this.fillCustomField(question, answer);
                 }
             }
         }
     }
 
-    async submitApplication(page: Page) {
-        const submitButton = await page.$(this.selectors.submitButton);
+    async navigateToApplicationPage(job: Job, waitUntil: 'domcontentloaded' | 'networkidle0' | 'networkidle2' = 'domcontentloaded') {
+        await this.page!.goto(`${job.link}/apply`, { waitUntil });
+    }
+
+    async submitApplication() {
+        const submitButton = await this.page!.$(this.selectors.submitButton);
         if (!submitButton) {
             throw new Error('Submit button not found');
         }
 
         await submitButton.click();
 
-        await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+        await this.page!.waitForNavigation({ waitUntil: 'domcontentloaded' });
         // Check if url suffix is /thanks
-        const url = page.url();
+        const url = this.page!.url();
 
         if (!url.includes('/thanks')) {
             throw new Error('Application not submitted');

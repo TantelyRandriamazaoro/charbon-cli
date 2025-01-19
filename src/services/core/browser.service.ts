@@ -146,42 +146,4 @@ export default class BrowserService {
                 console.error('Unsupported board:', board);
         }
     }
-
-    async batchApply(jobs: Job[]): Promise<void> {
-        await this.init({ headless: true });
-
-        if (!this.browser) {
-            throw new Error('Browser not initialized');
-        }
-
-        for (const job of jobs) {
-            try {
-                this.setBoard(job.board);
-
-                if (!this.boardService) {
-                    throw new Error('Board service not initialized');
-                }
-
-                console.log('-------------------------');
-                console.log(chalk.blue('Applying to', job.title));
-                console.log(chalk.green(job.link));
-
-                const page = await this.newPage();
-
-                await page.setViewport({
-                    width: 1280,  // Width of the viewport
-                    height: 1024,  // Height of the viewport
-                    deviceScaleFactor: 1, // Device scale factor
-                });
-
-                await this.boardService.apply(job, page);
-            } catch (error) {
-                console.error('An error occurred while applying to job:', error);
-            }
-        }
-
-        // await this.closeBrowser();
-    }
-
-
 }

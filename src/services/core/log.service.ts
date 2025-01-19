@@ -68,6 +68,12 @@ export default class LogService {
         const { custom_fields, custom_fields_answers } = job;
         const { getOutput, append } = buildMultilineOutput();
 
+        const details = job.details as JobDetails;
+
+        append(`Reviewing job: ${job?.title}`, chalk.blue);
+        append(job?.link, chalk.green);
+        append(details?.summary);
+
         // Custom fields
         if (custom_fields) {
             for (const question of custom_fields) {

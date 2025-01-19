@@ -10,6 +10,7 @@ export enum Actions {
     SKIP = "SKIP",
     DUPLICATE = "DUPLICATE",
     SWAP = "SWAP",
+    UPDATE = "UPDATE"
 }
 
 @injectable()
@@ -72,7 +73,7 @@ export default class InquirerService {
         return answers.morePages as boolean;
     }
 
-    async askForAction() {
+    async askForReview() {
         const { action } = await inquirer.prompt([
             {
                 type: "list",
@@ -89,49 +90,6 @@ export default class InquirerService {
         ]);
 
         return action as Actions;
-    }
-
-    async askForStatus(job: Job): Promise<Status> {
-        const readinessAnswers = await inquirer.prompt([
-            {
-                type: 'confirm',
-                name: 'ready',
-                message: 'Is this application ready to submit?',
-                default: true,
-            },
-        ]);
-
-        if (readinessAnswers.ready) {
-            console.log('Great! The application is ready to submit.');
-            return 'Ready';
-        } else {
-            const followUpAnswers = await inquirer.prompt([
-                {
-                    type: 'list',
-                    name: 'reason',
-                    message: 'Why is the application not ready?',
-                    choices: [
-                        'Modify some fields',
-                        'Not qualified',
-                        'Not interested',
-                    ],
-                },
-            ]);
-
-            if (followUpAnswers.reason === 'Modify some fields') {
-                console.log('The application needs some modifications.');
-                return 'Not Ready';
-                // Update your data object or database with the new value here
-            } else if (followUpAnswers.reason === 'Not qualified') {
-                console.log('The application is not qualified.');
-                return 'Not Qualified';
-            } else if (followUpAnswers.reason === 'Not interested') {
-                console.log('The applicant is not interested.');
-                return 'Not Interested';
-            }
-
-            return 'Not Ready';
-        }
     }
 
     async askForNextJob() {
@@ -184,5 +142,46 @@ export default class InquirerService {
         ]);
 
         return answers.locationType.toLowerCase() as LocationType;
+    }
+
+    async askForFinalReview() {
+
+        const nextAction = await inquirer.prompt([
+            {
+                type: "list",
+                name: "action",
+                message:
+                    "Are you satisfied with the answers?",
+                choices: [
+                    { name: "✅ Yes, Proceed to submit", value: Actions.PROCEED },
+                    { name: "🔄 No, I want to modify some fields", value: Actions.UPDATE },
+                    { name: "❌ No, I've changed my mind", value: Actions.SKIP },
+                ],
+            },
+        ]);
+
+        return nextAction.action as Actions;
+    }
+
+    async askForModification(job: Job) {
+        const { modify } = await inquirer.prompt([
+            {
+                type: "list",
+                name: "modify",
+                message: "Which field do you want to modify?",
+                choices: job.custom_fields!.map((field) => ({ name: field.label, value: field.label })),
+            }
+        ]);
+
+        const { instructions } = await inquirer.prompt([
+            {
+                type: "input",
+                name: "instructions",
+                message: "Please write any instructions for the AI to regenerate the answer.",
+                default: "Make it better, please.",
+            },
+        ]);
+
+        return { modify, instructions };
     }
 }

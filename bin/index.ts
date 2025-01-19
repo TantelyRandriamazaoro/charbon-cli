@@ -47,40 +47,43 @@ program
     console.log("Scraping job applications");
     const scrapeController = container.get(ScrapeController);
     scrapeController.init().then(() =>
-      scrapeController.handle(options)
+      scrapeController.handleBulk(options)
+    );
+  });
+
+  program
+  .command("review")
+  .description("Review all jobs available")
+  .option("-l, --limit <limit>", "Limit the number of jobs to review")
+  .action((options) => {
+    console.log("Reviewing all jobs available");
+    const reviewController = container.get(ReviewController);
+    reviewController.init().then(() =>
+      reviewController.handleBulk(options)
     );
   });
 
 program
   .command("prepare")
   .description("Prepare job applications")
-  .action(() => {
+  .option("-l, --limit <limit>", "Limit the number of jobs to prepare")
+  .action((options) => {
     console.log("Preparing job applications");
     const prepareController = container.get(PrepareController);
     prepareController.init().then(() =>
-      prepareController.handle()
-    );
-  });
-
-program
-  .command("review")
-  .description("Review all jobs available")
-  .action(() => {
-    console.log("Reviewing all jobs available");
-    const reviewController = container.get(ReviewController);
-    reviewController.init().then(() =>
-      reviewController.handle()
+      prepareController.handleBulk(options)
     );
   });
 
 program
   .command("apply")
   .description("Apply to all jobs available")
-  .action(() => {
+  .option("-l, --limit <limit>", "Limit the number of jobs to apply")
+  .action((options) => {
     console.log("Applying to all jobs available");
     const applyController = container.get(ApplyController);
     applyController.init().then(() =>
-      applyController.handle()
+      applyController.handleBulk(options)
     );
   });
 

@@ -42,7 +42,7 @@ export default class FileSystemService {
 
         // Read the file
         const data = fs.readFileSync(knowledgeBase, 'utf8');
-        return data;
+        return data as string;
     }
 
     async getCountries() {

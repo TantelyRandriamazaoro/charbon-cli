@@ -1,5 +1,5 @@
 import IDatabaseService from "@/models/IDatabaseService";
-import { ScrapedJobDetails } from "@/models/Job";
+import Job, { ScrapedJobDetails } from "@/models/Job";
 import LeverService from "@/services/boards/lever.service";
 import AiService from "@/services/core/ai.service";
 import BrowserService from "@/services/core/browser.service";
@@ -14,6 +14,7 @@ export default class ScrapeController {
     private spinner: Ora | null = null;
     private boardService: LeverService | null = null;
     private page: Page | undefined;
+    private total = 0;
 
     constructor(
         @inject('DatabaseService') private databaseService: IDatabaseService,
@@ -35,64 +36,69 @@ export default class ScrapeController {
         }
     }
 
-    async handle(options?: { limit?: number }) {
+    async handle(job?: Job, type?: 'bulk' | 'live') {
         try {
-            const jobs = await this.databaseService.getDiscoveredJobs(options?.limit || 10);
+            if (!job && type !== 'bulk') {
+                job = await this.databaseService.getJob({ status: 'Discovered' });
 
-            if (!jobs || jobs?.length === 0) {
-                console.log('No jobs to scrape');
+                if (!job) {
+                    throw new Error("No job to scrape");
+                }
+            }
+
+            if (!job) {
                 return;
             }
 
-            for (const job of jobs) {
-                try {
-                    switch (job.board) {
-                        case "lever":
-                            this.boardService = this.leverService;
-                            break;
-                        default:
-                            throw new Error("Unsupported board");
-                    }
+            try {
+                switch (job.board) {
+                    case "lever":
+                        this.boardService = this.leverService;
+                        break;
+                    default:
+                        throw new Error("Unsupported board");
+                }
 
-                    this.page = await this.browserService.newPage();
+                this.page = await this.browserService.newPage();
 
-                    console.log('-------------------------');
-                    console.log(chalk.blue('Scraping', job.title));
-                    console.log(chalk.green(job.link));
+                console.log('-------------------------');
+                console.log(chalk.blue('Scraping', job.title));
+                console.log(chalk.green(job.link));
 
-                    this.spinner?.start("Navigating to job page...");
-                    await this.page!.goto(job.link, { waitUntil: "domcontentloaded" });
-                    this.spinner?.succeed(chalk.green("Job page loaded."));
+                this.spinner?.start("Navigating to job page...");
+                await this.page!.goto(job.link, { waitUntil: "domcontentloaded" });
+                this.spinner?.succeed(chalk.green("Job page loaded."));
 
-                    const title = await this.page?.title();
+                await this.boardService.setPage(this.page);
 
-                    if (title.includes('404')) {
-                        throw new Error("Not Found");
-                    }
+                const title = await this.page?.title();
 
-                    this.spinner?.start("Scraping job details...");
-                    job.description = await this.boardService!.scrapeJobDescription(this.page!);
-                    this.spinner?.succeed(chalk.green("Job details scraped."));
+                if (title.includes('404')) {
+                    throw new Error("Not Found");
+                }
 
-                    this.spinner?.start("Extracting job details...");
-                    job.details = await this.aiService.getJobDetails(job.description);
-                    this.spinner?.succeed(chalk.green("Job details extracted."));
+                this.spinner?.start("Scraping job details...");
+                job.description = await this.boardService!.scrapeJobDescription();
+                this.spinner?.succeed(chalk.green("Job details scraped."));
 
-                    job.status = "Scraped";
+                this.spinner?.start("Extracting job details...");
+                job.details = await this.aiService.getJobDetails(job.description);
+                this.spinner?.succeed(chalk.green("Job details extracted."));
 
-                } catch (error: any) {
-                    if (error.message === "Not Found") {
-                        console.error(chalk.red("Job not found."));
-                        job.status = "Not Found";
-                    } else {
-                        console.error(chalk.red("Failed to scrape job."));
-                        console.error(error);
-                    }
-                } finally {
-                    await this.databaseService.updateJob(job);
-                    if (this.page) {
-                        await this.page.close();
-                    }
+                job.status = "Scraped";
+
+            } catch (error: any) {
+                if (error.message === "Not Found") {
+                    console.error(chalk.red("Job not found."));
+                    job.status = "Not Found";
+                } else {
+                    console.error(chalk.red("Failed to scrape job."));
+                    console.error(error);
+                }
+            } finally {
+                await this.databaseService.updateJob(job);
+                if (this.page) {
+                    await this.page.close();
                 }
             }
 
@@ -101,7 +107,33 @@ export default class ScrapeController {
             console.error('An error occurred during scraping:', error);
         }
 
-        await this.browserService.closeBrowser();
+        return;
+    }
+
+    async handleBulk(options?: { limit?: number }) {
+        try {
+            const jobs = await this.databaseService.getJobs({ status: 'Discovered', limit: options?.limit || 10 });
+
+            if (!jobs || jobs.length === 0) {
+                console.log('No jobs to scrape');
+                return;
+            }
+
+            this.total = jobs.length;
+
+            console.clear();
+
+            console.log(chalk.blue(`Bulk scraping ${this.total} jobs`));
+            for (const job of jobs) {
+                await this.handle(job, 'bulk');
+            }
+
+            console.log('Bulk scraping completed successfully');
+
+            await this.browserService.closeBrowser();
+        } catch (error) {
+            console.error('An error occurred during bulk scraping:', error);
+        }
 
         return;
     }

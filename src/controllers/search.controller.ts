@@ -78,7 +78,7 @@ export default class SearchController {
             }
 
             const transformedResults = await this.transformationService.transformSearchResults({ ...searchResults, resume: options.resume });
-            const { success, duplicates } = await this.databaseService.storeDiscoveredJobs(transformedResults);
+            const { success, duplicates } = await this.databaseService.storeJobs(transformedResults);
 
             // Log a user friendly list of results using chalk
             success.forEach((result, index) => {
