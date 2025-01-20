@@ -3,6 +3,7 @@ import Job from "@/models/Job";
 import LeverService from "@/services/boards/lever.service";
 import AiService from "@/services/core/ai.service";
 import BrowserService from "@/services/core/browser.service";
+import FeedbackService from "@/services/core/feedback.service";
 import FileSystemService from "@/services/core/filesystem.service";
 import TransformationService from "@/services/core/transformation.service";
 import chalk from "chalk";
@@ -11,7 +12,6 @@ import ora, { Ora } from "ora";
 
 @injectable()
 export default class PrepareController {
-    private spinner: Ora | null = null;
     private boardService: LeverService | null = null;
 
     constructor(
@@ -20,18 +20,19 @@ export default class PrepareController {
         @inject(TransformationService) private transformationService: TransformationService,
         @inject(BrowserService) private browserService: BrowserService,
         @inject(LeverService) private leverService: LeverService,
+        @inject(FeedbackService) private feedbackService: FeedbackService,
         @inject('DatabaseService') private databaseService: IDatabaseService
     ) { }
 
     async init() {
-        this.spinner = ora("Initializing services...").start();
+        this.feedbackService.start("Initializing services...");
         try {
             await this.databaseService.init();
-            this.spinner?.succeed(chalk.green("Services initialized successfully."));
+            this.feedbackService.succeed(chalk.green("Services initialized successfully."));
             await this.browserService.init({ headless: true });
             await this.browserService.newPage();
         } catch (error) {
-            this.spinner?.fail(chalk.red("Failed to initialize services."));
+            this.feedbackService.fail(chalk.red("Failed to initialize services."));
             throw error;
         }
     }
@@ -57,16 +58,16 @@ export default class PrepareController {
             await page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
             await this.boardService.setPage(page);
 
-            this.spinner?.start("Navigating to application page...");
+            this.feedbackService.start("Navigating to application page...");
             await this.boardService.navigateToApplicationPage(job);
-            this.spinner?.succeed(chalk.green("Application page loaded."));
+            this.feedbackService.succeed(chalk.green("Application page loaded."));
 
             const fields = await this.boardService.scrapeCustomFields();
 
             if (fields.length > 0) {
-                this.spinner?.start("Processing custom fields...");
+                this.feedbackService.start("Processing custom fields...");
                 job.custom_fields = this.transformationService.normalizeCustomFields(fields, job.board);
-                this.spinner?.succeed(chalk.green("Custom fields processed."));
+                this.feedbackService.succeed(chalk.green("Custom fields processed."));
 
 
                 const knowledgeBase = await this.fileSystemService.getKnowledgeBase();
@@ -75,10 +76,10 @@ export default class PrepareController {
                     throw new Error("Knowledge base not found");
                 }
 
-                this.spinner?.start("Getting custom answers...");
+                this.feedbackService.start("Getting custom answers...");
                 const { answers } = (await this.aiService.getCustomAnswers(job.custom_fields, knowledgeBase, job.details)) || {};
                 job.custom_fields_answers = answers;
-                this.spinner?.succeed(chalk.green("Custom answers retrieved."));
+                this.feedbackService.succeed(chalk.green("Custom answers retrieved."));
             } else {
                 chalk.yellow("No custom fields found.");
             }

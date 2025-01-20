@@ -1,6 +1,7 @@
 import IDatabaseService from "@/models/IDatabaseService";
 import Job from "@/models/Job";
 import BrowserService from "@/services/core/browser.service";
+import FeedbackService from "@/services/core/feedback.service";
 import FileSystemService from "@/services/core/filesystem.service";
 import InquirerService, { Actions } from "@/services/core/inquirer.service";
 import LogService from "@/services/core/log.service";
@@ -13,26 +14,25 @@ import { Page } from "puppeteer";
 
 @injectable()
 export default class ReviewController {
-    private page: Page | null = null;
-    private spinner: Ora | null = null;
 
     constructor(
         @inject('DatabaseService') private databaseService: IDatabaseService,
         @inject(InquirerService) private inquirerService: InquirerService,
         @inject(LogService) private logService: LogService,
         @inject(BrowserService) private browserService: BrowserService,
-        @inject(FileSystemService) private fileSystemService: FileSystemService
+        @inject(FileSystemService) private fileSystemService: FileSystemService,
+        @inject(FeedbackService) private feedbackService: FeedbackService
     ) { }
 
     async init() {
-        this.spinner = ora("Initializing services...").start();
+        this.feedbackService.start("Initializing services...");
         try {
             await this.databaseService.init();
-            this.spinner?.succeed(chalk.green("Services initialized successfully."));
+            this.feedbackService.succeed(chalk.green("Services initialized successfully."));
             await this.browserService.init({ headless: false });
             await this.browserService.newPage();
         } catch (error) {
-            this.spinner?.fail(chalk.red("Failed to initialize services."));
+            this.feedbackService.fail(chalk.red("Failed to initialize services."));
             throw error;
         }
     }
@@ -45,9 +45,9 @@ export default class ReviewController {
             console.clear();
             
             if (type == 'bulk') {
-                this.spinner?.start(chalk.green("Opening job link..."));
+                this.feedbackService.start(chalk.green("Opening job link..."));
                 await page.goto(job.link, { waitUntil: 'domcontentloaded' });
-                this.spinner?.succeed(chalk.green("Job link opened."));
+                this.feedbackService.succeed(chalk.green("Job link opened."));
             }
 
             this.logService.logJobDetails(job);

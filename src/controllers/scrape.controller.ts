@@ -3,6 +3,7 @@ import Job, { ScrapedJobDetails } from "@/models/Job";
 import LeverService from "@/services/boards/lever.service";
 import AiService from "@/services/core/ai.service";
 import BrowserService from "@/services/core/browser.service";
+import FeedbackService from "@/services/core/feedback.service";
 import TransformationService from "@/services/core/transformation.service";
 import chalk from "chalk";
 import { inject, injectable } from "inversify";
@@ -11,7 +12,6 @@ import { Page } from "puppeteer";
 
 @injectable()
 export default class ScrapeController {
-    private spinner: Ora | null = null;
     private boardService: LeverService | null = null;
     private page: Page | undefined;
     private total = 0;
@@ -21,18 +21,19 @@ export default class ScrapeController {
         @inject(BrowserService) private browserService: BrowserService,
         @inject(TransformationService) private transformationService: TransformationService,
         @inject(AiService) private aiService: AiService,
-        @inject(LeverService) private leverService: LeverService
+        @inject(LeverService) private leverService: LeverService,
+        @inject(FeedbackService) private feedbackService: FeedbackService
     ) { }
 
     async init() {
-        this.spinner = ora("Initializing services...").start();
+        this.feedbackService.start("Initializing services...");
         try {
             await this.databaseService.init();
-            this.spinner?.succeed(chalk.green("Services initialized successfully."));
+            this.feedbackService.succeed(chalk.green("Services initialized successfully."));
             await this.browserService.init({ headless: true });
             await this.browserService.newPage();
         } catch (error) {
-            this.spinner?.fail(chalk.red("Failed to initialize services."));
+            this.feedbackService.fail(chalk.red("Failed to initialize services."));
             throw error;
         }
     }
@@ -58,9 +59,9 @@ export default class ScrapeController {
                 console.log(chalk.blue('Scraping', job.title));
                 console.log(chalk.green(job.link));
 
-                this.spinner?.start("Navigating to job page...");
+                this.feedbackService.start("Navigating to job page...");
                 await this.page!.goto(job.link, { waitUntil: "domcontentloaded" });
-                this.spinner?.succeed(chalk.green("Job page loaded."));
+                this.feedbackService.succeed(chalk.green("Job page loaded."));
 
 
                 const title = await this.page?.title();
@@ -69,13 +70,13 @@ export default class ScrapeController {
                     throw new Error("Not Found");
                 }
 
-                this.spinner?.start("Scraping job details...");
+                this.feedbackService.start("Scraping job details...");
                 job.description = await this.boardService!.scrapeJobDescription();
-                this.spinner?.succeed(chalk.green("Job details scraped."));
+                this.feedbackService.succeed(chalk.green("Job details scraped."));
 
-                this.spinner?.start("Extracting job details...");
+                this.feedbackService.start("Extracting job details...");
                 job.details = await this.aiService.getJobDetails(job.description);
-                this.spinner?.succeed(chalk.green("Job details extracted."));
+                this.feedbackService.succeed(chalk.green("Job details extracted."));
 
                 job.status = "Scraped";
 

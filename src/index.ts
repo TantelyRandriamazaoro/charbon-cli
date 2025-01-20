@@ -18,6 +18,7 @@ import InquirerService from "./services/core/inquirer.service";
 import LeverService from "./services/boards/lever.service";
 import ReviewController from "./controllers/review.controller";
 import LiveController from "./controllers/live.controller";
+import FeedbackService from "./services/core/feedback.service";
 
 
 const container = new Container();
@@ -32,6 +33,7 @@ container.bind(InquirerService).toSelf();
 container.bind(FileSystemService).toSelf();
 container.bind(TransformationService).toSelf();
 container.bind(LogService).toSelf();
+container.bind(FeedbackService).toSelf().inSingletonScope();
 container.bind(BrowserService).toSelf().inSingletonScope();
 container.bind(SearchService).toDynamicValue((context) => {
     return new SearchService(

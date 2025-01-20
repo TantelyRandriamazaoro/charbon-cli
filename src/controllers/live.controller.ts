@@ -53,7 +53,8 @@ export default class LiveController {
         let job = await this.databaseService.getJob({ status: 'Discovered' });
 
         if (!job) {
-            throw new Error("No job found");
+            console.log(chalk.yellow("No jobs found"));
+            return;
         }
 
         const setJob = (data: Job) => {

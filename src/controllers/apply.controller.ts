@@ -3,6 +3,7 @@ import Job from "@/models/Job";
 import LeverService from "@/services/boards/lever.service";
 import AiService from "@/services/core/ai.service";
 import BrowserService from "@/services/core/browser.service";
+import FeedbackService from "@/services/core/feedback.service";
 import FileSystemService from "@/services/core/filesystem.service";
 import InquirerService, { Actions } from "@/services/core/inquirer.service";
 import LogService from "@/services/core/log.service";
@@ -13,10 +14,8 @@ import ora, { Ora } from "ora";
 
 @injectable()
 export default class ApplyController {
-    private spinner: Ora | null = null;
     private boardService: LeverService | null = null;
     private knowledgeBase: string | null = null;
-
 
     constructor(
         @inject('DatabaseService') private databaseService: IDatabaseService,
@@ -25,11 +24,12 @@ export default class ApplyController {
         @inject(InquirerService) private inquirerService: InquirerService,
         @inject(LogService) private logService: LogService,
         @inject(AiService) private aiService: AiService,
-        @inject(FileSystemService) private fileSystemService: FileSystemService
+        @inject(FileSystemService) private fileSystemService: FileSystemService,
+        @inject(FeedbackService) private feedbackService: FeedbackService
     ) { }
 
     async init() {
-        this.spinner = ora("Initializing services...").start();
+        this.feedbackService.start("Initializing services...");
         try {
             await this.databaseService.init();
             await this.browserService.init({ headless: false });
@@ -37,9 +37,9 @@ export default class ApplyController {
 
             this.knowledgeBase = await this.fileSystemService.getKnowledgeBase() || null;
 
-            this.spinner?.succeed(chalk.green("Services initialized successfully."));
+            this.feedbackService.succeed(chalk.green("Services initialized successfully."));
         } catch (error) {
-            this.spinner?.fail(chalk.red("Failed to initialize services."));
+            this.feedbackService.fail(chalk.red("Failed to initialize services."));
             throw error;
         }
     }
@@ -63,28 +63,28 @@ export default class ApplyController {
         console.log(chalk.green(job.link));
 
         if (type === 'bulk') {
-            this.spinner?.start("Navigating to application page...");
+            this.feedbackService.start("Navigating to application page...");
             await this.boardService?.navigateToApplicationPage(job, 'networkidle2');
-            this.spinner?.succeed(chalk.green("Application page loaded."));
+            this.feedbackService.succeed(chalk.green("Application page loaded."));
         }
 
-        this.spinner?.start("Uploading resume...");
+        this.feedbackService.start("Uploading resume...");
         await this.boardService?.uploadResume(job)
-        this.spinner?.succeed(chalk.green("Resume uploaded."));
+        this.feedbackService.succeed(chalk.green("Resume uploaded."));
 
-        this.spinner?.start("Filling out personal information...");
+        this.feedbackService.start("Filling out personal information...");
         await this.boardService?.fillPersonalInfo();
-        this.spinner?.succeed(chalk.green("Personal information filled."));
+        this.feedbackService.succeed(chalk.green("Personal information filled."));
 
         if (job.custom_fields && job.custom_fields.length > 0) {
-            this.spinner?.start("Filling out custom fields...");
+            this.feedbackService.start("Filling out custom fields...");
             await this.boardService?.fillCustomFields(job);
-            this.spinner?.succeed(chalk.green("Custom fields filled."));
+            this.feedbackService.succeed(chalk.green("Custom fields filled."));
         }
 
-        this.spinner?.start("Filling out cover letter...");
+        this.feedbackService.start("Filling out cover letter...");
         await this.boardService?.fillCover();
-        this.spinner?.succeed(chalk.green("Cover letter filled."));
+        this.feedbackService.succeed(chalk.green("Cover letter filled."));
 
         if (job.custom_fields && job.custom_fields.length > 0) {
 
@@ -144,13 +144,13 @@ export default class ApplyController {
             }
         }
 
-        this.spinner?.start("Submitting application...");
+        this.feedbackService.start("Submitting application...");
 
         try {
             await this.boardService?.submitApplication();
-            this.spinner?.succeed(chalk.green("Application submitted."));
+            this.feedbackService.succeed(chalk.green("Application submitted."));
         } catch (error) {
-            this.spinner?.warn(chalk.yellow("Timeout occurred. Please check the application status."));
+            this.feedbackService.warn(chalk.yellow("Timeout occurred. Please check the application status."));
             const { submitted } = await inquirer.prompt({
                 type: 'confirm',
                 name: 'submitted',
