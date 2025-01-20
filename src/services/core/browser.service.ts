@@ -14,7 +14,7 @@ import axios from "axios";
 @injectable()
 export default class BrowserService {
     private browser: Browser | null = null;
-    private boardService: LeverService | null = null;
+    private page: Page | undefined = undefined;
 
     constructor(
         @inject(AiService) private aiService: AiService,
@@ -129,21 +129,19 @@ export default class BrowserService {
         }
     }
 
-    newPage(): Promise<Page> {
+    async newPage() {
         if (!this.browser) {
             throw new Error('Browser not initialized');
         }
 
-        return this.browser.newPage();
+        this.page = await this.browser.newPage();
     }
 
-    setBoard(board: Boards | undefined) {
-        switch (board) {
-            case 'lever':
-                this.boardService = this.leverService;
-                break;
-            default:
-                console.error('Unsupported board:', board);
+    getPage() {
+        if (!this.page) {
+            throw new Error('Page not initialized');
         }
+
+        return this.page;
     }
 }

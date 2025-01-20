@@ -70,7 +70,7 @@ export default class LogService {
 
         const details = job.details as JobDetails;
 
-        append(`Reviewing job: ${job?.title}`, chalk.blue);
+        append(`Reviewing answers: ${job?.title}`, chalk.blue);
         append(job?.link, chalk.green);
         append(details?.summary);
 

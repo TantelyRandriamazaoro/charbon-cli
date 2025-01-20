@@ -29,25 +29,15 @@ export default class PrepareController {
             await this.databaseService.init();
             this.spinner?.succeed(chalk.green("Services initialized successfully."));
             await this.browserService.init({ headless: true });
+            await this.browserService.newPage();
         } catch (error) {
             this.spinner?.fail(chalk.red("Failed to initialize services."));
             throw error;
         }
     }
 
-    async handle(job?: Job, type?: 'bulk' | 'live') {
+    async handle(job: Job, type: 'bulk' | 'live') {
         try {
-            if (!job && type !== 'bulk') {
-                job = await this.databaseService.getJob({ status: 'Reviewed' });
-
-                if (!job) {
-                    throw new Error("No job to prepare");
-                }
-            }
-
-            if (!job) {
-                return;
-            }
 
             switch (job.board) {
                 case "lever":
@@ -57,12 +47,14 @@ export default class PrepareController {
                     throw new Error("Unsupported board");
             }
 
+            console.clear();
+
             console.log('-------------------------');
             console.log(chalk.blue('Preparing', job.title));
             console.log(chalk.green(job.link));
 
-            const page = await this.browserService.newPage();
-
+            const page = this.browserService.getPage();
+            await page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
             await this.boardService.setPage(page);
 
             this.spinner?.start("Navigating to application page...");
@@ -94,13 +86,16 @@ export default class PrepareController {
             job.status = "Prepared";
 
             await this.databaseService.updateJob(job);
-            await page.close();
+
+            if (type == 'bulk') {
+                await page.close();
+            }
 
         } catch (err) {
             console.error(err);
         }
 
-        return;
+        return job;
     }
 
     async handleBulk(options?: { limit?: number }) {

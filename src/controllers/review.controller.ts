@@ -30,33 +30,25 @@ export default class ReviewController {
             await this.databaseService.init();
             this.spinner?.succeed(chalk.green("Services initialized successfully."));
             await this.browserService.init({ headless: false });
+            await this.browserService.newPage();
         } catch (error) {
             this.spinner?.fail(chalk.red("Failed to initialize services."));
             throw error;
         }
     }
 
-    async handle(job?: Job, type?: 'bulk' | 'live') {
+    async handle(job: Job, type: 'bulk' | 'live') {
         try {
-            if (!job && type !== 'bulk') {
-                job = await this.databaseService.getJob({ status: 'Scraped' });
-
-                if (!job) {
-                    throw new Error("No job to scrape");
-                }
-            }
-
-            if (!job) {
-                return;
-            }
-
-            const page = await this.browserService.newPage();
+            const page = this.browserService.getPage();
             await page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
 
             console.clear();
-            this.spinner?.start(chalk.green("Opening job link..."));
-            await page.goto(job.link, { waitUntil: 'domcontentloaded' });
-            this.spinner?.succeed(chalk.green("Job link opened."));
+            
+            if (type == 'bulk') {
+                this.spinner?.start(chalk.green("Opening job link..."));
+                await page.goto(job.link, { waitUntil: 'domcontentloaded' });
+                this.spinner?.succeed(chalk.green("Job link opened."));
+            }
 
             this.logService.logJobDetails(job);
 
@@ -82,12 +74,15 @@ export default class ReviewController {
             }
 
             await this.databaseService.updateJob(job);
-            await page.close();
+
+            if (type == 'bulk') {
+                await page.close();
+            }
         } catch (err) {
             console.error(err);
         }
 
-        return;
+        return job;
     }
 
     async handleBulk(options?: { limit?: number }) {

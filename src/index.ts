@@ -32,7 +32,7 @@ container.bind(InquirerService).toSelf();
 container.bind(FileSystemService).toSelf();
 container.bind(TransformationService).toSelf();
 container.bind(LogService).toSelf();
-container.bind(BrowserService).toSelf();
+container.bind(BrowserService).toSelf().inSingletonScope();
 container.bind(SearchService).toDynamicValue((context) => {
     return new SearchService(
         context.container.get('DatabaseService'),

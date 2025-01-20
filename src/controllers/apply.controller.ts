@@ -33,6 +33,8 @@ export default class ApplyController {
         try {
             await this.databaseService.init();
             await this.browserService.init({ headless: false });
+            await this.browserService.newPage();
+
             this.knowledgeBase = await this.fileSystemService.getKnowledgeBase() || null;
 
             this.spinner?.succeed(chalk.green("Services initialized successfully."));
@@ -42,19 +44,7 @@ export default class ApplyController {
         }
     }
 
-    async handle(job?: Job, type?: 'bulk' | 'live') {
-        if (!job && type !== 'bulk') {
-            job = await this.databaseService.getJob({ status: 'Prepared' });
-
-            if (!job) {
-                throw new Error("No job to prepare");
-            }
-        }
-
-        if (!job) {
-            return;
-        }
-
+    async handle(job: Job, type: 'bulk' | 'live') {
         switch (job.board) {
             case "lever":
                 this.boardService = this.leverService;
@@ -63,9 +53,8 @@ export default class ApplyController {
                 throw new Error("Unsupported board");
         }
 
-        const page = await this.browserService.newPage();
+        const page = this.browserService.getPage();
         await page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
-
         await this.boardService.setPage(page);
 
         console.clear();
@@ -73,9 +62,11 @@ export default class ApplyController {
         console.log(chalk.blue('Applying to', job.title));
         console.log(chalk.green(job.link));
 
-        this.spinner?.start("Navigating to application page...");
-        await this.boardService?.navigateToApplicationPage(job, 'networkidle2');
-        this.spinner?.succeed(chalk.green("Application page loaded."));
+        if (type === 'bulk') {
+            this.spinner?.start("Navigating to application page...");
+            await this.boardService?.navigateToApplicationPage(job, 'networkidle2');
+            this.spinner?.succeed(chalk.green("Application page loaded."));
+        }
 
         this.spinner?.start("Uploading resume...");
         await this.boardService?.uploadResume(job)
@@ -108,7 +99,7 @@ export default class ApplyController {
                 } else if (action === Actions.SKIP) {
                     job.status = 'Not Interested';
                     await this.databaseService.updateJob(job);
-                    return;
+                    return job;
                 } else if (action === Actions.UPDATE) {
                     const { modify, instructions } = await this.inquirerService.askForModification(job);
 
@@ -149,7 +140,7 @@ export default class ApplyController {
                 await this.databaseService.updateJob(job);
 
                 await page.close();
-                return;
+                return job;
             }
         }
 
@@ -171,12 +162,15 @@ export default class ApplyController {
                 throw new Error('Application not submitted');
             }
         }
+
         job.status = "Applied";
         await this.databaseService.updateJob(job);
 
-        await page.close();
-        return;
+        if (type === 'bulk') {
+            await page.close();
+        }
 
+        return job;
     }
 
     async handleBulk(options?: { limit?: number }) {

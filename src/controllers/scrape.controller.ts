@@ -30,26 +30,15 @@ export default class ScrapeController {
             await this.databaseService.init();
             this.spinner?.succeed(chalk.green("Services initialized successfully."));
             await this.browserService.init({ headless: true });
+            await this.browserService.newPage();
         } catch (error) {
             this.spinner?.fail(chalk.red("Failed to initialize services."));
             throw error;
         }
     }
 
-    async handle(job?: Job, type?: 'bulk' | 'live') {
+    async handle(job: Job, type: 'bulk' | 'live') {
         try {
-            if (!job && type !== 'bulk') {
-                job = await this.databaseService.getJob({ status: 'Discovered' });
-
-                if (!job) {
-                    throw new Error("No job to scrape");
-                }
-            }
-
-            if (!job) {
-                return;
-            }
-
             try {
                 switch (job.board) {
                     case "lever":
@@ -59,7 +48,11 @@ export default class ScrapeController {
                         throw new Error("Unsupported board");
                 }
 
-                this.page = await this.browserService.newPage();
+                this.page = this.browserService.getPage();
+                await this.page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
+                await this.boardService.setPage(this.page);
+
+                console.clear();
 
                 console.log('-------------------------');
                 console.log(chalk.blue('Scraping', job.title));
@@ -69,7 +62,6 @@ export default class ScrapeController {
                 await this.page!.goto(job.link, { waitUntil: "domcontentloaded" });
                 this.spinner?.succeed(chalk.green("Job page loaded."));
 
-                await this.boardService.setPage(this.page);
 
                 const title = await this.page?.title();
 
@@ -97,8 +89,9 @@ export default class ScrapeController {
                 }
             } finally {
                 await this.databaseService.updateJob(job);
-                if (this.page) {
-                    await this.page.close();
+
+                if (type == 'bulk') {
+                    await this.page!.close();
                 }
             }
 
@@ -107,7 +100,7 @@ export default class ScrapeController {
             console.error('An error occurred during scraping:', error);
         }
 
-        return;
+        return job;
     }
 
     async handleBulk(options?: { limit?: number }) {
