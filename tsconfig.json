@@ -46,7 +46,6 @@
   },
   "include": [
     "src/**/*.ts",
-    "bin/**/*.ts",
     "config/**/*ts"
   ], // Files to include
   "exclude": [
