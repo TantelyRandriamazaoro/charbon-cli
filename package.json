@@ -1,5 +1,5 @@
 {
-  "name": "charbon-cli",
+  "name": "@charbon/core",
   "version": "1.0.0",
   "bin": {
     "charbon": "./dist/bin/index.js"
