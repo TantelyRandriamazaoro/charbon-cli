@@ -4,6 +4,8 @@ import _Boards from '@/models/boards';
 import { injectable, inject } from "inversify";
 import { SearchEntry, SearchOptions, SearchResults } from '@/models/Search';
 import IDatabaseService from '@/models/IDatabaseService';
+import ConfigService from './config.service';
+import { AppConfig } from '@/models/Config';
 
 @injectable()
 export default class SearchService {
@@ -12,10 +14,12 @@ export default class SearchService {
 
     constructor(
         @inject('DatabaseService') private databaseService: IDatabaseService,
-        options: { apiKey: string; id: string; }
+        @inject(ConfigService) private configService: ConfigService
     ) {
-        this.apiKey = options.apiKey;
-        this.cx = options.id;
+
+        const { apiKey, id } = this.configService.get('googleCustomSearch');
+        this.apiKey = apiKey;
+        this.cx = id;
     }
 
     async query(query: string, options: SearchOptions): Promise<SearchResults> {

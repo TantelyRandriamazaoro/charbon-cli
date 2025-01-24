@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { CustomFieldsAnswers, JobDetails, NormalizedCustomField } from "@/models/Job";
+import ConfigService from "./config.service";
 
 const JobDetails = z.object({
     technical_skills: z.array(z.string()),
@@ -29,9 +30,10 @@ export default class AiService {
     private openai: OpenAI;
 
     constructor(
-        options: { apiKey: string; }
+        @inject(ConfigService) private configService: ConfigService
     ) {
-        this.openai = new OpenAI({ apiKey: options.apiKey });
+        const { apiKey } = this.configService.get("openai");
+        this.openai = new OpenAI({ apiKey });
     }
 
     async getJobDetails(description: string) {

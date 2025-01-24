@@ -5,11 +5,12 @@
     "charbon": "./dist/bin/index.js"
   },
   "type": "module",
-  "main": "dist/bin/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsc && tsc-alias",
-    "watch": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "copy": "cp -r src/templates/ dist/templates && cp -r src/data/ dist/data",
+    "build": "tsc && tsc-alias && npm run copy",
+    "watch": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\") && npm run copy",
     "test": "jest",
     "start": "node dist/bin/index.js",
     "refresh": "npm unlink -g && npm link"
@@ -28,6 +29,7 @@
     "googleapis": "^144.0.0",
     "inquirer": "^12.3.0",
     "inversify": "^6.2.1",
+    "js-yaml": "^4.1.0",
     "mongodb": "^6.12.0",
     "openai": "^4.77.3",
     "ora": "^8.1.1",

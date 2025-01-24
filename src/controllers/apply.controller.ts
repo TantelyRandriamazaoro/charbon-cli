@@ -1,8 +1,10 @@
+import { InputConfig } from "@/models/Config";
 import IDatabaseService from "@/models/IDatabaseService";
 import Job from "@/models/Job";
 import LeverService from "@/services/boards/lever.service";
 import AiService from "@/services/core/ai.service";
 import BrowserService from "@/services/core/browser.service";
+import ConfigService from "@/services/core/config.service";
 import FeedbackService from "@/services/core/feedback.service";
 import FileSystemService from "@/services/core/filesystem.service";
 import InquirerService, { Actions } from "@/services/core/inquirer.service";
@@ -10,12 +12,11 @@ import LogService from "@/services/core/log.service";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { inject, injectable } from "inversify";
-import ora, { Ora } from "ora";
 
 @injectable()
 export default class ApplyController {
     private boardService: LeverService | null = null;
-    private knowledgeBase: string | null = null;
+    private input: InputConfig | null = null;
 
     constructor(
         @inject('DatabaseService') private databaseService: IDatabaseService,
@@ -25,7 +26,8 @@ export default class ApplyController {
         @inject(LogService) private logService: LogService,
         @inject(AiService) private aiService: AiService,
         @inject(FileSystemService) private fileSystemService: FileSystemService,
-        @inject(FeedbackService) private feedbackService: FeedbackService
+        @inject(FeedbackService) private feedbackService: FeedbackService,
+        @inject(ConfigService) private configService: ConfigService
     ) { }
 
     async init() {
@@ -35,7 +37,7 @@ export default class ApplyController {
             await this.browserService.init({ headless: false });
             await this.browserService.newPage();
 
-            this.knowledgeBase = await this.fileSystemService.getKnowledgeBase() || null;
+            this.input = this.configService.getInputConfig();
 
             this.feedbackService.succeed(chalk.green("Services initialized successfully."));
         } catch (error) {
@@ -73,7 +75,7 @@ export default class ApplyController {
         this.feedbackService.succeed(chalk.green("Resume uploaded."));
 
         this.feedbackService.start("Filling out personal information...");
-        await this.boardService?.fillPersonalInfo();
+        await this.boardService?.fillPersonalInfo(this.input!);
         this.feedbackService.succeed(chalk.green("Personal information filled."));
 
         if (job.custom_fields && job.custom_fields.length > 0) {
@@ -83,7 +85,7 @@ export default class ApplyController {
         }
 
         this.feedbackService.start("Filling out cover letter...");
-        await this.boardService?.fillCover();
+        await this.boardService?.fillCover(this.input!);
         this.feedbackService.succeed(chalk.green("Cover letter filled."));
 
         if (job.custom_fields && job.custom_fields.length > 0) {

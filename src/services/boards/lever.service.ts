@@ -1,7 +1,9 @@
 import Job, { LeverCustomFieldCard, NormalizedCustomField, ScrapedJobDetails } from "@/models/Job";
 import { inject, injectable } from "inversify";
 import { ElementHandle, Page } from "puppeteer";
-import { cover, lever, personal_info } from "@config/input";
+import FileSystemService from "../core/filesystem.service";
+import { InputConfig } from "@/models/Config";
+
 
 @injectable()
 export default class LeverService {
@@ -95,7 +97,8 @@ export default class LeverService {
         await this.page!.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
     }
 
-    async fillPersonalInfo() {
+    async fillPersonalInfo({ personal_info, lever }: InputConfig) {
+
         const fields = [
             { selector: this.selectors.name, value: `${personal_info.first_name} ${personal_info.last_name}` },
             { selector: this.selectors.email, value: personal_info.email },
@@ -121,9 +124,9 @@ export default class LeverService {
         }
     }
 
-    async fillCover() {
+    async fillCover({ default_cover }: InputConfig) {
         const additionalInfo = await this.page!.$(this.selectors.additionalInfo);
-        await additionalInfo?.type(cover);
+        await additionalInfo?.type(default_cover);
     }
 
     async fillCustomField(question: NormalizedCustomField, answer: string | string[]) {

@@ -4,4 +4,8 @@ dist
 data
 !src/data
 resumes
-config/input.ts
+config
+sql
+mock
+charbon.config.js
+workspaces

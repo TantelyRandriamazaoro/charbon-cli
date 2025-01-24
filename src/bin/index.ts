@@ -3,7 +3,6 @@
 import chalk from "chalk";
 import figlet from "figlet";
 import { program } from "commander";
-import container from "@/index";
 import SearchController from "@/controllers/search.controller";
 import PrepareController from "@/controllers/prepare.controller";
 import ScrapeController from "@/controllers/scrape.controller";
@@ -11,19 +10,24 @@ import { SearchOptions } from "@/models/Search";
 import ReviewController from "@/controllers/review.controller";
 import ApplyController from "@/controllers/apply.controller";
 import LiveController from "@/controllers/live.controller";
+import isInitialized from "@/utils/isInitialized";
+import inquirer from "inquirer";
+import createStructure from "@/utils/createStructure";
+import structure from "@/configs/structure";
+import { run } from "@/index";
 
 program
-  .version("1.0.0")
-  .description("My Node CLI")
-  .option("-n, --name <type>", "Add your name")
-  .action((options) => {
-    if (!options.name) {
-      console.log(chalk.red("Please provide your name"));
+  .command("init")
+  .description("Initialize a workspace")
+  .action(() => {
+    if (isInitialized()) {
+      console.log(chalk.red("Project already initialized"));
       return;
+    } else {
+      createStructure('./', structure);
+      console.log(chalk.green("Project initialized successfully"));
     }
-    console.log(chalk.red(figlet.textSync(options.name, { horizontalLayout: "full" })))
   });
-
 
 program
   .command("search")
@@ -33,8 +37,9 @@ program
   .option("-c, --country <country>", "Country to search for")
   .description("Search for jobs on a specific board, fetches the job description and custom fields")
   .action((query, options: SearchOptions) => {
-    const searchController = container.get(SearchController);
-    searchController.init().then(() => {
+    run(async (container) => {
+      const searchController = container.get(SearchController);
+      await searchController.init()
       searchController.handle(query, options)
     });
   });
@@ -44,23 +49,27 @@ program
   .description("Scrape job applications")
   .option("-l, --limit <limit>", "Limit the number of jobs to scrape")
   .action((options) => {
-    console.log("Scraping job applications");
-    const scrapeController = container.get(ScrapeController);
-    scrapeController.init().then(() =>
-      scrapeController.handleBulk(options)
-    );
+    run(async (container) => {
+      console.log("Scraping job applications");
+      const scrapeController = container.get(ScrapeController);
+      scrapeController.init().then(() =>
+        scrapeController.handleBulk(options)
+      );
+    })
   });
 
-  program
+program
   .command("review")
   .description("Review all jobs available")
   .option("-l, --limit <limit>", "Limit the number of jobs to review")
   .action((options) => {
-    console.log("Reviewing all jobs available");
-    const reviewController = container.get(ReviewController);
-    reviewController.init().then(() =>
+    run(async (container) => {
+      console.log("Reviewing all jobs available");
+      const reviewController = container.get(ReviewController);
+      await reviewController.init()
       reviewController.handleBulk(options)
-    );
+
+    });
   });
 
 program
@@ -68,11 +77,12 @@ program
   .description("Prepare job applications")
   .option("-l, --limit <limit>", "Limit the number of jobs to prepare")
   .action((options) => {
-    console.log("Preparing job applications");
-    const prepareController = container.get(PrepareController);
-    prepareController.init().then(() =>
+    run(async (container) => {
+      console.log("Preparing job applications");
+      const prepareController = container.get(PrepareController);
+      await prepareController.init()
       prepareController.handleBulk(options)
-    );
+    })
   });
 
 program
@@ -80,22 +90,26 @@ program
   .description("Apply to all jobs available")
   .option("-l, --limit <limit>", "Limit the number of jobs to apply")
   .action((options) => {
-    console.log("Applying to all jobs available");
-    const applyController = container.get(ApplyController);
-    applyController.init().then(() =>
+    run(async (container) => {
+      console.log("Applying to all jobs available");
+      const applyController = container.get(ApplyController);
+      await applyController.init()
       applyController.handleBulk(options)
-    );
+
+    })
   });
 
 program
   .command("live")
   .description("Apply to all jobs available")
   .action(() => {
-    console.log("Applying to all jobs available");
-    const liveController = container.get(LiveController);
-    liveController.init().then(() =>
+    run(async (container) => {
+      console.log("Applying to all jobs available");
+      const liveController = container.get(LiveController);
+      await liveController.init()
       liveController.handle()
-    );
+    })
   });
 
 program.parse(process.argv);
+process.removeAllListeners('warning');
