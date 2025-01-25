@@ -74,10 +74,6 @@ export default class ReviewController {
             }
 
             await this.databaseService.updateJob(job);
-
-            if (type == 'bulk') {
-                await page.close();
-            }
         } catch (err) {
             console.error(err);
         }

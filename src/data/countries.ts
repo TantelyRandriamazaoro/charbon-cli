@@ -1,4 +1,4 @@
-[
+const countries = [
   { "name": "Afghanistan", "code": "af" },
   { "name": "Albania", "code": "al" },
   { "name": "Algeria", "code": "dz" },
@@ -239,3 +239,5 @@
   { "name": "Zambia", "code": "zm" },
   { "name": "Zimbabwe", "code": "zw" }
 ]
+
+export default countries;

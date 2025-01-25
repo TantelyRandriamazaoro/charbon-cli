@@ -4,6 +4,7 @@ import inquirer from "inquirer";
 import { inject, injectable } from "inversify";
 import FileSystemService from "./filesystem.service";
 import { LocationType } from "@/models/Search";
+import countries from "@/data/countries";
 
 export enum Actions {
     PROCEED = "PROCEED",
@@ -106,8 +107,6 @@ export default class InquirerService {
     }
 
     async askForCountry() {
-        const countries = await this.filesystemService.getCountries();
-
         const answers = await inquirer.prompt([
             {
                 type: 'search',
@@ -118,7 +117,7 @@ export default class InquirerService {
                     if (!input) {
                         return [];
                     }
-                    const filtered = countries!.map((country) => ({
+                    const filtered = countries.map((country) => ({
                         value: country,
                         name: country.name
                     })).filter((country) => country.name.toLowerCase().includes(input.toLowerCase()));

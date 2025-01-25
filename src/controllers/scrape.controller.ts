@@ -53,9 +53,12 @@ export default class ScrapeController {
                 await this.page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
                 await this.boardService.setPage(this.page);
 
-                console.clear();
+                if (type === 'live') {
+                    console.clear();
+                } else {
+                    console.log('-------------------------');
+                }
 
-                console.log('-------------------------');
                 console.log(chalk.blue('Scraping', job.title));
                 console.log(chalk.green(job.link));
 
@@ -90,10 +93,6 @@ export default class ScrapeController {
                 }
             } finally {
                 await this.databaseService.updateJob(job);
-
-                if (type == 'bulk') {
-                    await this.page!.close();
-                }
             }
 
             console.log('Job scraping completed successfully');

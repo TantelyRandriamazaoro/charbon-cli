@@ -168,10 +168,6 @@ export default class ApplyController {
         job.status = "Applied";
         await this.databaseService.updateJob(job);
 
-        if (type === 'bulk') {
-            await page.close();
-        }
-
         return job;
     }
 
@@ -188,6 +184,8 @@ export default class ApplyController {
         }
 
         console.log('All jobs applied');
+
+        await this.browserService.closeBrowser();
 
         return;
     }

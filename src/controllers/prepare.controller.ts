@@ -48,9 +48,12 @@ export default class PrepareController {
                     throw new Error("Unsupported board");
             }
 
-            console.clear();
+            if (type === 'live') {
+                console.clear();
+            } else {
+                console.log('-------------------------');
+            }
 
-            console.log('-------------------------');
             console.log(chalk.blue('Preparing', job.title));
             console.log(chalk.green(job.link));
 
@@ -87,11 +90,6 @@ export default class PrepareController {
             job.status = "Prepared";
 
             await this.databaseService.updateJob(job);
-
-            if (type == 'bulk') {
-                await page.close();
-            }
-
         } catch (err) {
             console.error(err);
         }
