@@ -75,13 +75,24 @@ export default class LeverService {
         // Enable request interception
         await this.page!.setRequestInterception(true);
 
+        // Add request interception logic
         this.page!.on('request', (request) => {
-            // Check if the request URL matches the API call you want to abort
-            if (request.url() === 'https://jobs.lever.co/parseResume') {
-                console.log(`Aborting request to: ${request.url()}`);
-                request.abort(); // Abort the request
-            } else {
-                request.continue(); // Allow other requests to continue
+            try {
+                // Only handle unresolved requests
+                if (!request.isInterceptResolutionHandled()) {
+                    if (request.url() === 'https://jobs.lever.co/parseResume') {
+                        console.log(`Aborting request to: ${request.url()}`);
+                        request.abort(); // Abort the targeted request
+                    } else {
+                        request.continue(); // Continue all other requests
+                    }
+                }
+            } catch (error: any) {
+                console.error(`Error handling request: ${request.url()} - ${error.message}`);
+                // Safely continue the request if an error occurs
+                if (!request.isInterceptResolutionHandled()) {
+                    request.continue();
+                }
             }
         });
 
