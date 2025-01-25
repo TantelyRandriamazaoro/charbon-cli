@@ -84,6 +84,7 @@ export default class BrowserService {
     }
     
     private async waitForBrowserId(endpointUrl: string, timeout: number): Promise<string | null> {
+        console.time('waitForBrowserId');
         const interval = 1000; // Check every second
         const maxAttempts = timeout / interval;
     
@@ -95,6 +96,7 @@ export default class BrowserService {
             await new Promise((resolve) => setTimeout(resolve, interval));
         }
     
+        console.timeEnd('waitForBrowserId');
         return null; // Timed out
     }
     

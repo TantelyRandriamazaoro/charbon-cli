@@ -66,17 +66,29 @@ export default class LiveController {
         }
 
         try {
-            setJob(await this.scrapeController.handle(job, 'live'))
-            setJob(await this.reviewController.handle(job, 'live'))
-            setJob(await this.prepareController.handle(job, 'live'))
-            setJob(await this.applyController.handle(job, 'live'))
+            const controllers = [
+                this.scrapeController,
+                this.reviewController,
+                this.prepareController,
+                this.applyController
+            ];
+            
+            for (const controller of controllers) {
+                job = await controller.handle(job, 'live');
+                setJob(job);
+            }
+            
+            console.log(chalk.green("Job successfully applied"));
+            console.log('Loading next job...');
+            await this.handle();
         } catch (error: any) {
             if (error?.message === "Aborting job") {
                 console.log(chalk.red("Aborting job"));
+                console.log('Loading next job...');
+                await this.handle();
+            } else {
+                console.error(error);
             }
-        } finally {
-            console.log('Loading next job...');
-            await this.handle();
         }
     }
 }

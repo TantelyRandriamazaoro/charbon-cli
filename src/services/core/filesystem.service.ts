@@ -47,8 +47,6 @@ export default class FileSystemService {
         // The file is a module, so we can import it
         const config = await import(configPath);
 
-        console.log(config.default);
-
         return config.default as Config;
     }
 

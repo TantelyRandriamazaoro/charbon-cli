@@ -16,7 +16,6 @@ import { inject, injectable } from "inversify";
 @injectable()
 export default class ApplyController {
     private boardService: LeverService | null = null;
-    private input: InputConfig | null = null;
 
     constructor(
         @inject('DatabaseService') private databaseService: IDatabaseService,
@@ -36,8 +35,6 @@ export default class ApplyController {
             await this.databaseService.init();
             await this.browserService.init({ headless: false });
             await this.browserService.newPage();
-
-            this.input = this.configService.getInputConfig();
 
             this.feedbackService.succeed(chalk.green("Services initialized successfully."));
         } catch (error) {
@@ -59,6 +56,8 @@ export default class ApplyController {
         await page.setViewport({ width: 1280, height: 1024, deviceScaleFactor: 1 });
         await this.boardService.setPage(page);
 
+        const { personal_info, default_cover } = this.configService.getInputConfig();
+
         console.clear();
 
         console.log(chalk.blue('Applying to', job.title));
@@ -75,7 +74,7 @@ export default class ApplyController {
         this.feedbackService.succeed(chalk.green("Resume uploaded."));
 
         this.feedbackService.start("Filling out personal information...");
-        await this.boardService?.fillPersonalInfo(this.input!);
+        await this.boardService?.fillPersonalInfo(personal_info);
         this.feedbackService.succeed(chalk.green("Personal information filled."));
 
         if (job.custom_fields && job.custom_fields.length > 0) {
@@ -85,7 +84,7 @@ export default class ApplyController {
         }
 
         this.feedbackService.start("Filling out cover letter...");
-        await this.boardService?.fillCover(this.input!);
+        await this.boardService?.fillCover(default_cover);
         this.feedbackService.succeed(chalk.green("Cover letter filled."));
 
         if (job.custom_fields && job.custom_fields.length > 0) {

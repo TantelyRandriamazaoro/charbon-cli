@@ -108,7 +108,7 @@ export default class LeverService {
         await this.page!.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
     }
 
-    async fillPersonalInfo({ personal_info }: InputConfig) {
+    async fillPersonalInfo(personal_info: InputConfig['personal_info']) {
 
         const fields = [
             { selector: this.selectors.name, value: `${personal_info.first_name} ${personal_info.last_name}` },
@@ -135,7 +135,7 @@ export default class LeverService {
         }
     }
 
-    async fillCover({ default_cover }: InputConfig) {
+    async fillCover(default_cover: InputConfig['default_cover']) {
         const additionalInfo = await this.page!.$(this.selectors.additionalInfo);
         await additionalInfo?.type(default_cover);
     }
