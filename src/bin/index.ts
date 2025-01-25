@@ -15,6 +15,9 @@ import inquirer from "inquirer";
 import createStructure from "@/utils/createStructure";
 import structure from "@/configs/structure";
 import { run } from "@/index";
+import dotenv from "dotenv";
+
+dotenv.config({ path: process.cwd() + '/.env' });
 
 program
   .command("init")

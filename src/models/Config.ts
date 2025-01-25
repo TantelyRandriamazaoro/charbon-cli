@@ -19,7 +19,10 @@ export type InputConfig = {
     },
     default_cover: string;
     lever: {
-        location: string
+        location: {
+            name: string;
+            id: string;
+        }
     }
 }
 

@@ -2,7 +2,6 @@ import { Container, interfaces } from "inversify";
 import SearchService from "./services/core/search.service";
 import LogService from "./services/core/log.service";
 
-import * as env from "./env";
 import AiService from "./services/core/ai.service";
 import TransformationService from "./services/core/transformation.service";
 import SearchController from "./controllers/search.controller";

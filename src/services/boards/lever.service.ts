@@ -97,14 +97,14 @@ export default class LeverService {
         await this.page!.waitForSelector(this.selectors.resumeUploadSuccess, { visible: true });
     }
 
-    async fillPersonalInfo({ personal_info, lever }: InputConfig) {
+    async fillPersonalInfo({ personal_info }: InputConfig) {
 
         const fields = [
             { selector: this.selectors.name, value: `${personal_info.first_name} ${personal_info.last_name}` },
             { selector: this.selectors.email, value: personal_info.email },
             { selector: this.selectors.phone, value: personal_info.phone },
             { selector: this.selectors.location, value: personal_info.location },
-            { selector: this.selectors.selectedLocation, value: lever.location },
+            { selector: this.selectors.selectedLocation, value: JSON.stringify(personal_info.lever.location) },
             { selector: this.selectors.currentCompany, value: personal_info.current_company },
             { selector: this.selectors.linkedin, value: personal_info.linkedin },
             { selector: this.selectors.linkedinProfile, value: personal_info.linkedin },

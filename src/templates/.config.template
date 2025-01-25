@@ -35,6 +35,6 @@ export default {
                 }, // This is required for adding your location to Lever. You can get this by selecting manually your location in Lever and then inspecting the #selected-input value.
             }
         },
-        cover: 'Write your cover letter here',
+        default_cover: 'Write your cover letter here',
     }
 }

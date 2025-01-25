@@ -4,6 +4,8 @@ import inquirer from 'inquirer';
 import { injectable } from 'inversify';
 import { Config } from '@/models/Config';
 
+const __dirname = path.resolve();
+
 @injectable()
 export default class FileSystemService {
 
@@ -11,7 +13,7 @@ export default class FileSystemService {
     }
 
     async listResume() {
-        const dataFolder = 'resumes';
+        const dataFolder = path.join(process.cwd(), 'resumes');
 
         // Check if the folder exists
         if (!fs.existsSync(dataFolder)) {
@@ -45,6 +47,8 @@ export default class FileSystemService {
         // The file is a module, so we can import it
         const config = await import(configPath);
 
+        console.log(config.default);
+
         return config.default as Config;
     }
 
@@ -60,19 +64,5 @@ export default class FileSystemService {
         // Read the file
         const data = fs.readFileSync(knowledgeBase, 'utf8');
         return data as string;
-    }
-
-    async getCountries() {
-        const countries = 'src/data/countries.json';
-
-        // Check if the file exists
-        if (!fs.existsSync(countries)) {
-            console.log(`The file '${countries}' does not exist.`);
-            return;
-        }
-
-        // Read the file
-        const data = fs.readFileSync(countries, 'utf8');
-        return JSON.parse(data) as { name: string; code: string; }[];
     }
 }
