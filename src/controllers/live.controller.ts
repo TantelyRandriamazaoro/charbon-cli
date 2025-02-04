@@ -72,12 +72,12 @@ export default class LiveController {
                 this.prepareController,
                 this.applyController
             ];
-            
-            for (const controller of controllers) {
-                job = await controller.handle(job, 'live');
+
+            for (const { handle } of controllers) {
+                job = await handle(job, 'live');
                 setJob(job);
             }
-            
+
             console.log(chalk.green("Job successfully applied"));
             console.log('Loading next job...');
             await this.handle();
